@@ -1,0 +1,156 @@
+<p>Upgrading to Fedora 20 from 19 is pretty straight forward. It can be done using FedUp or yum. In this article, we present the procedure using yum. Be aware that you need a good internet connection to perform the upgrade. Our primary reference for this task is: <a href="http://fedoraproject.org/wiki/Upgrading_Fedora_using_yum">fedoraproject -- Upgrading Fedora using yum</a></p>
+
+<p>First, you have to open a terminal such as gnome-terminal. Most of the commands here will require root privilege. Hence, it is suggested that you log in as root</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;">$ su - root
+Password: 
+# </pre>
+
+<p>Let's follow the instruction step by step. Initially we perform cleanup. After that, we download all required update packages and install. Then, we update grub so that we can boot to new kernel without problem. And then we perform some post-installation commands:</p>
+<h3>Cleanup</h3>
+<p>In this stage we find and remove old config files which no package owns:</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># yum -y install rpmconf; rpmconf -a
+Configuration file `/etc/cups/cups-browsed.conf'
+-rw-r--r--. 1 root root 1959 Nov 19 20:21 /etc/cups/cups-browsed.conf.rpmnew
+-rw-r--r--. 1 root root 1211 Dec  1 20:19 /etc/cups/cups-browsed.conf
+ ==&gt; Package distributor has shipped an updated version.
+   What would you like to do about it ?  Your options are:
+    Y or I  : install the package maintainer's version
+    N or O  : keep your currently-installed version
+      D     : show the differences between the versions
+      M	    : merge configuration files
+      Z     : background this process to examine the situation
+      S     : skip this file
+ The default action is to keep your current version.
+*** aliases (Y/I/N/O/D/Z/S) [default=N] ? 
+Your choice: Configuration file `/etc/nsswitch.conf'
+-rw-r--r--. 1 root root 1726 Oct 22  2012 /etc/nsswitch.conf.rpmnew
+-rw-r--r--. 1 root root 1711 Jan  2 15:22 /etc/nsswitch.conf
+ ==&gt; Package distributor has shipped an updated version.
+   What would you like to do about it ?  Your options are:
+    Y or I  : install the package maintainer's version
+    N or O  : keep your currently-installed version
+      D     : show the differences between the versions
+      M	    : merge configuration files
+      Z     : background this process to examine the situation
+      S     : skip this file
+ The default action is to keep your current version.
+*** aliases (Y/I/N/O/D/Z/S) [default=N] ? 
+Your choice: Configuration file `/etc/hba.conf'
+-rw-r--r--. 1 root root 813 Jul 11  2013 /etc/hba.conf.rpmnew
+-rw-r--r--. 1 root root 818 Dec  1 20:31 /etc/hba.conf
+ ==&gt; Package distributor has shipped an updated version.
+   What would you like to do about it ?  Your options are:
+    Y or I  : install the package maintainer's version
+    N or O  : keep your currently-installed version
+      D     : show the differences between the versions
+      M	    : merge configuration files
+      Z     : background this process to examine the situation
+      S     : skip this file
+ The default action is to keep your current version.
+*** aliases (Y/I/N/O/D/Z/S) [default=N] ? 
+Your choice: Y
+Configuration file `/etc/pam.d/postlogin'
+lrwxrwxrwx. 1 root root  12 Feb 23  2013 /etc/pam.d/postlogin -&gt; postlogin-ac
+-rw-r--r--. 1 root root 325 Jul 12  2013 /etc/pam.d/postlogin.rpmnew
+ ==&gt; Package distributor has shipped an updated version.
+   What would you like to do about it ?  Your options are:
+    Y or I  : install the package maintainer's version
+    N or O  : keep your currently-installed version
+      D     : show the differences between the versions
+      M	    : merge configuration files
+      Z     : background this process to examine the situation
+      S     : skip this file
+ The default action is to keep your current version.
+*** aliases (Y/I/N/O/D/Z/S) [default=N] ? 
+Your choice: Y
+</pre>
+<p>Ths command asks us what to do with some of the conflicting files. We have chosen "yes" to all of them.</p>
+
+<p></p>It's appropriate to remove unused files now:<p></p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># find /etc /var -name '*?.rpm?*'
+/etc/pki/tls/certs/ca-bundle.trust.crt.rpmsave
+/etc/pki/tls/certs/ca-bundle.crt.rpmsave
+/etc/pki/java/cacerts.rpmsave</pre>
+<p>Let's erase them now:</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># rm -f /etc/pki/tls/certs/ca-bundle.trust.crt.rpmsave \
+ /etc/pki/tls/certs/ca-bundle.crt.rpmsave \
+/etc/pki/java/cacerts.rpmsave</pre>
+<p>Let's list orphan packages:</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># yum -y install yum-utils; package-cleanup --leaves
+audit-libs-devel-2.3.4-1.fc19.x86_64
+glib-1.2.10-39.fc19.x86_64
+glibc-static-2.17-20.fc19.x86_64
+hplip-libs-3.13.11-4.fc19.x86_64
+libXi-devel-1.7.2-1.fc19.x86_64
+libdb4-4.8.30-10.fc19.x86_64
+libetonyek-0.0.2-1.fc19.x86_64
+liblouis-python-2.5.3-1.fc19.noarch
+libreoffice-impress-4.1.5.3-7.fc19.x86_64
+libreoffice-writer-4.1.5.3-7.fc19.x86_64
+libreport-newt-2.1.12-3.fc19.x86_64
+libtool-2.4.2-23.fc19.x86_64
+</pre>
+<p>It's time to remove them:</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;">yum -y remove audit-libs-devel-2.3.4-1.fc19.x86_64 \
+glib-1.2.10-39.fc19.x86_64 glibc-static-2.17-20.fc19.x86_64 \
+hplip-libs-3.13.11-4.fc19.x86_64 libXi-devel-1.7.2-1.fc19.x86_64 \
+libdb4-4.8.30-10.fc19.x86_64 libetonyek-0.0.2-1.fc19.x86_64 \
+liblouis-python-2.5.3-1.fc19.noarch libreoffice-impress-4.1.5.3-7.fc19.x86_64 \
+libreoffice-writer-4.1.5.3-7.fc19.x86_64 libreport-newt-2.1.12-3.fc19.x86_64 \
+libtool-2.4.2-23.fc19.x86_64</pre>
+
+<p>As libreoffice is pretty big for update; we can remove it now:</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;">yum -y remove libreoffice-\*</pre>
+<p>We can continue to next step to download and install upgrade packages.</p>
+
+<h3>Package download and installation</h3>
+<p>Let's install gpg key for Fedora 20.</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;">rpm --import https://fedoraproject.org/static/246110C1.txt</pre>
+<p>In this stage we need to switch to log out user account and switch terminal. After logging out press Ctrl + Alt + F2 and login as root. Now switch to multi-user terminal mode.</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># systemctl isolate multi-user.target</pre>
+
+<p>This will kill gdm and user interface services. Press Ctrl + Alt + F2 to get back to your terminal. Now let's perform yum update</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># yum -y update yum</pre>
+
+<p>Let's clean all previous yum files and make package upgrade to Fedora 20.</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># yum -y clean all
+# yum --releasever=20 distro-sync</pre>
+
+<p>It will take some time depending on your internet speed. Have a coffe and other small tasks.</p>
+
+<p>When it's done we need upgrade boot files and grub configuration files.</p>
+
+<h4>Updating GRUB on EFI System (GPT Disk)</h4>
+<p>On EFI System with GPT disk, commands will be like this:</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># cp --backup=numbered -a /boot/efi/EFI/fedora/grub.cfg /root/grub.cfg.bak # create backup copy
+# /usr/sbin/grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg # update config file
+# yum -y reinstall grub2-efi # this is the most important step here</pre>
+
+<h4>Updating GRUB on Traditional BIOS System (Regular Disk)</h4>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># cp --backup=numbered -a /boot/grub2/grub.cfg{,.bak} # create backup copy
+# /usr/sbin/grub2-mkconfig -o /boot/grub2/grub.cfg # update config file
+# grub2-install /dev/sda		# assuming your hard disk is sda, second hard disk will be sdb and so on..</pre>
+
+<h3>Post Installation Tasks</h3>
+<p>We can fix init script orders now and reboot</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># cd /etc/rc.d/init.d; for f in *; do [ -x $f ] &amp;&amp; /sbin/chkconfig $f resetpriorities; done
+# reboot</pre>
+
+<p>We can remove any orphan package now</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># package-cleanup --orphans
+btparser.x86_64
+firstboot.x86_64
+libgssglue.x86_64 
+# yum -y remove btparser.x86_64 firstboot.x86_64 \
+libgssglue.x86_64 </pre>
+
+<p>Check new operating system and kernel information</p>
+<pre class="brush: bash; tab-size: 4; toolbar: false;"># cat /etc/redhat-release 
+Fedora release 20 (Heisenbug)
+
+# uname -a
+Linux research.saoslab.com 3.13.8-200.fc20.x86_64 #1 SMP Tue Apr 1 09:35:46 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux</pre>
+
+<h4>References</h4>
+<ul><li><a href="http://fedoraproject.org/wiki/Upgrading_Fedora_using_yum">fedoraproject -- Upgrading Fedora using yum</a></li>
+<li><a href="http://sa-blog.azurewebsites.net/post/2013/02/16/upgrade-fedora-17-to-18-using-yum">saoslab - upgrade fedora 17 to 18</a></li></ul>

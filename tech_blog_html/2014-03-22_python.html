@@ -1,0 +1,98 @@
+<div style="width: 300px; height: 250px; background: #252525; float: left; margin-right: 10px;">
+<!-- Post ad 01_medium -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:300px;height:250px"
+     data-ad-client="ca-pub-1497529643036617"
+     data-ad-slot="6722199079"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script></div>
+<p><a href="ps://www.python.org">python.org</a> provides official python installer for different platforms. Our goal in this article is to demonstrate installation of python software in Windows following presenting the way of using Visual Studio as python IDE.</p>
+
+<h3>Installation</h3>
+<ol>
+<li>Download appropriate Windows installer from: <a href="https://www.python.org/download/releases/2.7.6">https://www.python.org/download/releases/2.7.6</a> according to your Operating System<br />
+<ul><li><a href="https://www.python.org/ftp/python/2.7.6/python-2.7.6.amd64.msi">64 bit Windows Installer (2.7.6)</a></li>
+<li><a href="https://www.python.org/ftp/python/2.7.6/python-2.7.6.msi">32 bit Windows Installer (2.7.6)</a></li></ul>
+</li>
+<li>Download appropriate Python Tools for Visual Studio (PTVS) installer from: <a href="https://pytools.codeplex.com/releases/view/103102">codeplex pytools<br />
+For Visual Studio 13 - <a href="https://pytools.codeplex.com/downloads/get/742075">PTVS 2.0 VS 2013.msi</a><br /></li>
+<li>Run Python Windows Installer</li>
+<li>Run Python PTVS installer</li>
+</ol>
+<h3>Setting Up Environment Variable</h3>
+<ol>
+<li>Go to My Computer and type <strong>Control Panel\System and Security\System</strong> on location bar as illustrated on the image below:
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fStarting.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fStarting.jpg" alt="System Settings" /></a></p>
+</li>
+<li>Click on Advanced system settings as pointed on the image below
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fAdvanced+System+Setting.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fAdvanced+System+Setting.jpg" alt="Advanced System Settings" /></a></p></li>
+<li>Click Environment Variables Button
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fEnvrn.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fEnvrn.jpg" alt="Environment Vars Button" /></a></p></li>
+<li>Click on New Button under User Variables
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fEnvironment_Variables.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fEnvironment_Variables.jpg" alt="Environment Variables" /></a></p></li>
+<li>Add path of python: <strong>C:\python27</strong> into environment variable text box after <strong>%path%;</strong>.
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fNew_user_variable.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fNew_user_variable.jpg" alt="New User Variables" /></a></p></li>
+<li>Click OK to apply new settings</li>
+</ol>
+
+<h3>Running Python</h3>
+<h4>Using Command Prompt</h4>
+<p>Fire up a command prompt (by typing cmd on Run Dialog or start menu). Type <strong>python</strong> you will see python's prompt. Type something there for example, <pre>print 'Hello World'</pre></p>
+<div align="center" style="width: 468px; height: 60px; background: #252525;  margin-left: auto; margin-right: auto; padding-bottom: 10px;">
+<!-- Post ad 02_flat -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:468px;height:60px"
+     data-ad-client="ca-pub-1497529643036617"
+     data-ad-slot="3489531077"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script></div>
+<p>It looks like figure below</p>
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fPythonX1.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fPythonX1.jpg" alt="python prompt" /></a></p>
+
+<h4>Using Visual Studio IDE</h4>
+<ol>
+<li>Fire up Visual Studio</li>
+<li>Click on New Project
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fNewProject.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fNewProject.jpg" alt="New Project" /></a></p></li>
+<li>Select Python from Templates from left side and click on python application from the list and Click OK
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fNewProjectVS.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fNewProjectVS.jpg" alt="Opening Python Project" /></a></p></li>
+<li>You can start coding python with Visual Studio. A sample 'hello world' would look like this:
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fsample+code.jpg" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f03%2fsample+code.jpg" alt="Writing Python Hello World" /></a></p></li></ol>
+<p>After typing code you have to press Ctrl+F5 to compile and run the program.</p>
+<div style="width: 300px; height: 250px; background: #252525; float: right; margin-left: 10px;">
+<!-- Post ad 01_medium -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:300px;height:250px"
+     data-ad-client="ca-pub-1497529643036617"
+     data-ad-slot="6722199079"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script></div>
+<h4>A sum problem</h4>
+<p>Problem: Given two integers a and b you have to find sum of all odd integers from a through b, inclusively.</p>
+<p>The python solution to this problem demonstrates how to take inputs, make comments, run a loop and perform simple arithmetic.
+<pre class="brush: py; first-line: 1; tab-size: 5; toolbar: false; "># Prelude: Thanks S. Atique for enriching the post with a sample code
+# Author: Atique (http://tech.saoslab.com/author/Atique)
+# Date: June 02, 2013
+
+num1 = input("Enter first number: ")
+num2 = input("Enter second number: ")
+
+num2 += 1
+
+sum=0
+for x in range (num1,num2):
+   if x % 2 == 1:
+      sum += x
+      print "current sum %d" %sum
+
+print "final sum %d" %sum
+</pre>
+</p>
+<h4>References</h4>
+<ul><li><a href="http://rosalind.info/problems/ini4/">Rosalind - sum problem</a></li>
+<li><a href="https://pytools.codeplex.com/">codeplex - Python Tools for Visual Studio</a></li>
+<li><a href="https://www.python.org/doc/">python - documentation</a></li>
+</ul>

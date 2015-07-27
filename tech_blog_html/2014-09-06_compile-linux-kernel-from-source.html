@@ -1,0 +1,632 @@
+<p>Compiling a vanilla Linux kernel or any Linux kernel from source pretty much the same on any Linux platform. The procedure is straightforward and involves following several steps,</p>
+<ul>
+<li>Prepare the system by installing required dev packages</li>
+<li>Get kernel source code and extract, optionally apply patches</li>
+<li>Build, install and reboot</li>
+</ul>
+<p>Please note commands preceding with a # prompt should be run as root user or with an sudo.</p>
+
+<h3>Preparation</h3>
+<p>Let's install ncurses-devel and then get kernel-source</p>
+<pre class="brush: bash; toolbar: false;"># yum -y install ncurses-devel</pre>
+<p>On ubuntu,</p>
+<pre class="brush: bash; toolbar: false;"># sudo apt-get install ncurses-devel</pre>
+
+<p>Kernel 3.x sources are located at <a href="https://www.kernel.org/pub/linux/kernel/v3.x/">https://www.kernel.org/pub/linux/kernel/v3.x/</a> We are going to build a relatively older kernel: kernel-3.14.17 source tar archive can be acquired using wget,</p>
+<pre class="brush: bash; toolbar: false;">$ wget -c https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.17.tar.gz</pre>
+
+<p>Uncompress source using tar,</p>
+<pre class="brush: bash; toolbar: false;">$ tar xzvf linux-3.14.17.tar.gz</pre>
+
+<p>Optionally, patch can be applied by acquiring from <a href="https://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.17.gz">patch-3.14.17</a> and following instruction at <a href="https://www.kernel.org/doc/Documentation/applying-patches.txt">kernel-doc</a></p>
+
+<p>Before building a kernel disabling SELinux on your dev machine is a good idea. It makes the build run faster.</p>
+<pre class="brush: bash; toolbar: false;"># setenforce 0</pre>
+
+<p>On Ubuntu apparmor can be disabled by applying,</p>
+<pre class="brush: bash; toolbar: false;">sudo /etc/init.d/apparmor stop</pre>
+<h3>Build</h3>
+<p>Clean the source file structure</p>
+<pre class="brush: bash; toolbar: false;">$ cd linux-3.14.17
+$ make clean &amp;&amp; make mrproper
+  CLEAN   scripts/basic
+  CLEAN   scripts/kconfig
+  CLEAN   scripts/mod
+  CLEAN   scripts/selinux/genheaders
+  CLEAN   scripts/selinux/mdp
+  CLEAN   scripts
+  CLEAN   include/config usr/include include/generated arch/x86/include/generated
+  CLEAN   .config .config.old .version include/generated/uapi/linux/version.h Module.symvers  signing_key.priv signing_key.x509 x509.genkey</pre>
+<p>A kernel build has tons of options and therefore make configuration is simplified by a terminal-menu driven configuration system. Initially kernel configuration menu might seem perplexing. It is better to start with a working version of configuration from current system. </p>
+<pre class="brush: bash; toolbar: false;">$ cp /boot/config-3.17.8-200.fc20.x86_64 .config</pre>
+
+<p>To create makefile from that configuration run,</p>
+<pre class="brush: bash; toolbar: false;">$ make menuconfig
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/kconfig/conf.o
+  HOSTCC  scripts/kconfig/lxdialog/checklist.o
+  HOSTCC  scripts/kconfig/lxdialog/inputbox.o
+  HOSTCC  scripts/kconfig/lxdialog/menubox.o
+  HOSTCC  scripts/kconfig/lxdialog/textbox.o
+  HOSTCC  scripts/kconfig/lxdialog/util.o
+  HOSTCC  scripts/kconfig/lxdialog/yesno.o
+  HOSTCC  scripts/kconfig/mconf.o
+  SHIPPED scripts/kconfig/zconf.tab.c
+  SHIPPED scripts/kconfig/zconf.lex.c
+  SHIPPED scripts/kconfig/zconf.hash.c
+  HOSTCC  scripts/kconfig/zconf.tab.o
+  HOSTLD  scripts/kconfig/mconf
+scripts/kconfig/mconf Kconfig</pre>
+
+<p>It brings the famous Linux kernel build configuration menu.</p>
+<p id="image"><a href="/image.axd?picture=%2f2014%2f09%2fkernel-config-menu.png" title="Click image to zoom"><img src="/image.axd?picture=%2f2014%2f09%2fkernel-config-menu.png" alt="Kernel build configuration menu"></a></p>
+<p>After selecting proper options for target hardware select save to save the configuration. Then, exit menu by selecting exit.</p>
+<p>After exiting it saves the file and shows like this in the terminal,</p>
+shows more on the terminal,<pre class="brush: bash; toolbar: false;">.config:759:warning: symbol value 'm' invalid for IOSF_MBI
+
+
+*** End of the configuration.
+*** Execute 'make' to start the build or try 'make help'.</pre>
+
+<p>Let’s build the kernel. As my system is quad core I perform the build with 4 jobs to make it faster,</p>
+<pre class="brush: bash; toolbar: false;">$ make -j4
+  HOSTLD  scripts/kconfig/conf
+scripts/kconfig/conf --silentoldconfig Kconfig
+  SYSHDR  arch/x86/syscalls/../include/generated/uapi/asm/unistd_32.h
+  SYSHDR  arch/x86/syscalls/../include/generated/uapi/asm/unistd_64.h
+  SYSHDR  arch/x86/syscalls/../include/generated/uapi/asm/unistd_x32.h
+  CHK     include/config/kernel.release
+  SYSTBL  arch/x86/syscalls/../include/generated/asm/syscalls_32.h
+  SYSHDR  arch/x86/syscalls/../include/generated/asm/unistd_32_ia32.h
+  SYSHDR  arch/x86/syscalls/../include/generated/asm/unistd_64_x32.h
+  WRAP    arch/x86/include/generated/asm/clkdev.h
+  SYSTBL  arch/x86/syscalls/../include/generated/asm/syscalls_64.h
+  CHK     include/generated/uapi/linux/version.h
+  UPD     include/generated/uapi/linux/version.h
+  CC      scripts/mod/empty.o
+  HOSTCC  scripts/mod/mk_elfconfig
+  CC      scripts/mod/devicetable-offsets.s
+  MKELF   scripts/mod/elfconfig.h
+  GEN     scripts/mod/devicetable-offsets.h
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/selinux/genheaders/genheaders
+  UPD     include/config/kernel.release
+  HOSTCC  scripts/kallsyms
+  HOSTCC  scripts/selinux/mdp/mdp
+  HOSTCC  scripts/pnmtologo
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/conmakehash
+  HOSTCC  scripts/recordmcount
+  HOSTCC  scripts/sortextable
+  HOSTCC  scripts/asn1_compiler
+  HOSTLD  scripts/mod/modpost
+  HOSTCC  arch/x86/tools/relocs_32.o
+  HOSTCC  arch/x86/tools/relocs_64.o
+  HOSTCC  arch/x86/tools/relocs_common.o
+  HOSTLD  arch/x86/tools/relocs
+  CHK     include/generated/utsrelease.h
+  UPD     include/generated/utsrelease.h
+  CC      kernel/bounds.s
+  GEN     include/generated/bounds.h
+  CC      arch/x86/kernel/asm-offsets.s
+  GEN     include/generated/asm-offsets.h
+  CALL    scripts/checksyscalls.sh
+  CC      init/main.o
+  CHK     include/generated/compile.h
+  CC      init/do_mounts.o
+  HOSTCC  usr/gen_init_cpio
+  UPD     include/generated/compile.h
+  CC      init/do_mounts_initrd.o
+  GEN     usr/initramfs_data.cpio.gz
+  AS      usr/initramfs_data.o
+  LD      usr/built-in.o
+  CC      init/do_mounts_md.o
+  CC      arch/x86/crypto/glue_helper.o
+  AS      arch/x86/ia32/ia32entry.o
+  AS      arch/x86/crypto/aes-x86_64-asm_64.o
+  CC      arch/x86/ia32/sys_ia32.o
+  CC      arch/x86/ia32/ia32_signal.o
+  CC      init/initramfs.o
+  CC      arch/x86/crypto/aes_glue.o
+  AS      arch/x86/crypto/aesni-intel_asm.o
+  CC      arch/x86/ia32/nosyscall.o
+  CC      init/calibrate.o
+  CC      arch/x86/crypto/aesni-intel_glue.o
+  CC      arch/x86/ia32/syscall_ia32.o
+  CC      arch/x86/ia32/audit.o
+  CC      init/init_task.o
+  LD      arch/x86/ia32/built-in.o
+  CC      arch/x86/crypto/fpu.o
+  CC      kernel/fork.o
+  CC      kernel/exec_domain.o
+  CC      init/version.o
+  AS      arch/x86/crypto/aesni-intel_avx-x86_64.o
+  AS [M]  arch/x86/crypto/blowfish-x86_64-asm_64.o
+  CC [M]  arch/x86/crypto/blowfish_glue.o
+  AS [M]  arch/x86/crypto/camellia-aesni-avx-asm_64.o
+  CC      arch/x86/kernel/process_64.o
+  LD      init/mounts.o
+  LD      init/built-in.o
+  CC      arch/x86/kernel/signal.o
+  CC [M]  arch/x86/crypto/camellia_aesni_avx_glue.o
+  CC      kernel/panic.o
+  AS      arch/x86/kernel/entry_64.o
+  LD      arch/x86/kvm/built-in.o
+  CC [M]  arch/x86/kvm/svm.o
+  CC      arch/x86/kernel/traps.o
+  AS [M]  arch/x86/crypto/camellia-aesni-avx2-asm_64.o
+  CC [M]  arch/x86/crypto/camellia_aesni_avx2_glue.o
+  CC      kernel/cpu.o
+  CC      arch/x86/kernel/irq.o
+  AS [M]  arch/x86/crypto/camellia-x86_64-asm_64.o
+  CC [M]  arch/x86/crypto/camellia_glue.o
+  CC      kernel/exit.o
+  CC      arch/x86/kernel/irq_64.o
+  AS [M]  arch/x86/crypto/cast5-avx-x86_64-asm_64.o
+  CC [M]  arch/x86/crypto/cast5_avx_glue.o
+… … … … … … … … … … … … …. … … … … ...
+… … … … … … … … … … … … …. … … … … …
+… … … … … … … … … … … … …. … … … … ...
+  LD [M]  net/sunrpc/auth_gss/auth_rpcgss.ko
+  LD [M]  net/sunrpc/auth_gss/rpcsec_gss_krb5.ko
+  LD [M]  net/sunrpc/sunrpc.ko
+  LD [M]  net/sunrpc/xprtrdma/svcrdma.ko
+  LD [M]  net/sunrpc/xprtrdma/xprtrdma.ko
+  LD [M]  net/tipc/tipc.ko
+  LD [M]  net/unix/unix_diag.ko
+  LD [M]  net/vmw_vsock/vmw_vsock_vmci_transport.ko
+  LD [M]  net/vmw_vsock/vsock.ko
+  LD [M]  net/wireless/cfg80211.ko
+  LD [M]  net/wireless/lib80211.ko
+  LD [M]  net/wireless/lib80211_crypt_ccmp.ko
+  LD [M]  net/wireless/lib80211_crypt_tkip.ko
+  LD [M]  net/wireless/lib80211_crypt_wep.ko
+  LD [M]  net/xfrm/xfrm_ipcomp.ko
+  LD [M]  security/keys/encrypted-keys/encrypted-keys.ko
+  LD [M]  security/keys/trusted.ko
+  LD [M]  sound/ac97_bus.ko
+  LD [M]  sound/core/oss/snd-mixer-oss.ko
+  LD [M]  sound/core/oss/snd-pcm-oss.ko
+  LD [M]  sound/core/seq/oss/snd-seq-oss.ko
+  LD [M]  sound/core/seq/snd-seq-device.ko
+  LD [M]  sound/core/seq/snd-seq-dummy.ko
+  LD [M]  sound/core/seq/snd-seq-midi-emul.ko
+  LD [M]  sound/core/seq/snd-seq-midi-event.ko
+  LD [M]  sound/core/seq/snd-seq-midi.ko
+  LD [M]  sound/core/seq/snd-seq-virmidi.ko
+  LD [M]  sound/core/seq/snd-seq.ko
+  LD [M]  sound/core/snd-hrtimer.ko
+  LD [M]  sound/core/snd-hwdep.ko
+  LD [M]  sound/core/snd-pcm.ko
+  LD [M]  sound/core/snd-rawmidi.ko
+  LD [M]  sound/core/snd-timer.ko
+  LD [M]  sound/core/snd.ko
+  LD [M]  sound/drivers/mpu401/snd-mpu401-uart.ko
+  LD [M]  sound/drivers/mpu401/snd-mpu401.ko
+  LD [M]  sound/drivers/opl3/snd-opl3-lib.ko
+  LD [M]  sound/drivers/opl3/snd-opl3-synth.ko
+  LD [M]  sound/drivers/pcsp/snd-pcsp.ko
+  LD [M]  sound/drivers/snd-aloop.ko
+  LD [M]  sound/drivers/snd-dummy.ko
+  LD [M]  sound/drivers/snd-mtpav.ko
+  LD [M]  sound/drivers/snd-mts64.ko
+  LD [M]  sound/drivers/snd-portman2x4.ko
+  LD [M]  sound/drivers/snd-serial-u16550.ko
+  LD [M]  sound/drivers/snd-virmidi.ko
+  LD [M]  sound/drivers/vx/snd-vx-lib.ko
+  LD [M]  sound/firewire/snd-dice.ko
+  LD [M]  sound/firewire/snd-firewire-lib.ko
+  LD [M]  sound/firewire/snd-firewire-speakers.ko
+  LD [M]  sound/firewire/snd-isight.ko
+  LD [M]  sound/firewire/snd-scs1x.ko
+  LD [M]  sound/i2c/other/snd-ak4113.ko
+  LD [M]  sound/i2c/other/snd-ak4114.ko
+  LD [M]  sound/i2c/other/snd-ak4xxx-adda.ko
+  LD [M]  sound/i2c/other/snd-pt2258.ko
+  LD [M]  sound/i2c/snd-cs8427.ko
+  LD [M]  sound/i2c/snd-i2c.ko
+  LD [M]  sound/isa/sb/snd-sb-common.ko
+  LD [M]  sound/pci/ac97/snd-ac97-codec.ko
+  LD [M]  sound/pci/ali5451/snd-ali5451.ko
+  LD [M]  sound/pci/asihpi/snd-asihpi.ko
+  LD [M]  sound/pci/au88x0/snd-au8810.ko
+  LD [M]  sound/pci/au88x0/snd-au8820.ko
+  LD [M]  sound/pci/au88x0/snd-au8830.ko
+  LD [M]  sound/pci/ca0106/snd-ca0106.ko
+  LD [M]  sound/pci/cs46xx/snd-cs46xx.ko
+  LD [M]  sound/pci/ctxfi/snd-ctxfi.ko
+  LD [M]  sound/pci/echoaudio/snd-darla20.ko
+  LD [M]  sound/pci/echoaudio/snd-darla24.ko
+  LD [M]  sound/pci/echoaudio/snd-echo3g.ko
+  LD [M]  sound/pci/echoaudio/snd-gina20.ko
+  LD [M]  sound/pci/echoaudio/snd-gina24.ko
+  LD [M]  sound/pci/echoaudio/snd-indigo.ko
+  LD [M]  sound/pci/echoaudio/snd-indigodj.ko
+  LD [M]  sound/pci/echoaudio/snd-indigodjx.ko
+  LD [M]  sound/pci/echoaudio/snd-indigoio.ko
+  LD [M]  sound/pci/echoaudio/snd-indigoiox.ko
+  LD [M]  sound/pci/echoaudio/snd-layla20.ko
+  LD [M]  sound/pci/echoaudio/snd-layla24.ko
+  LD [M]  sound/pci/echoaudio/snd-mia.ko
+  LD [M]  sound/pci/echoaudio/snd-mona.ko
+  LD [M]  sound/pci/emu10k1/snd-emu10k1-synth.ko
+  LD [M]  sound/pci/emu10k1/snd-emu10k1.ko
+  LD [M]  sound/pci/emu10k1/snd-emu10k1x.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-analog.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-ca0110.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-ca0132.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-cirrus.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-cmedia.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-conexant.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-generic.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-hdmi.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-idt.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-realtek.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-si3054.ko
+  LD [M]  sound/pci/hda/snd-hda-codec-via.ko
+  LD [M]  sound/pci/hda/snd-hda-codec.ko
+  LD [M]  sound/pci/hda/snd-hda-intel.ko
+  LD [M]  sound/pci/ice1712/snd-ice1712.ko
+  LD [M]  sound/pci/ice1712/snd-ice1724.ko
+  LD [M]  sound/pci/ice1712/snd-ice17xx-ak4xxx.ko
+  LD [M]  sound/pci/korg1212/snd-korg1212.ko
+  LD [M]  sound/pci/lola/snd-lola.ko
+  LD [M]  sound/pci/lx6464es/snd-lx6464es.ko
+  LD [M]  sound/pci/mixart/snd-mixart.ko
+  LD [M]  sound/pci/nm256/snd-nm256.ko
+  LD [M]  sound/pci/oxygen/snd-oxygen-lib.ko
+  LD [M]  sound/pci/oxygen/snd-oxygen.ko
+  LD [M]  sound/pci/oxygen/snd-virtuoso.ko
+  LD [M]  sound/pci/pcxhr/snd-pcxhr.ko
+  LD [M]  sound/pci/riptide/snd-riptide.ko
+  LD [M]  sound/pci/rme9652/snd-hdsp.ko
+  LD [M]  sound/pci/rme9652/snd-hdspm.ko
+  LD [M]  sound/pci/rme9652/snd-rme9652.ko
+  LD [M]  sound/pci/snd-ad1889.ko
+  LD [M]  sound/pci/snd-als300.ko
+  LD [M]  sound/pci/snd-als4000.ko
+  LD [M]  sound/pci/snd-atiixp-modem.ko
+  LD [M]  sound/pci/snd-atiixp.ko
+  LD [M]  sound/pci/snd-azt3328.ko
+  LD [M]  sound/pci/snd-bt87x.ko
+  LD [M]  sound/pci/snd-cmipci.ko
+  LD [M]  sound/pci/snd-cs4281.ko
+  LD [M]  sound/pci/snd-ens1370.ko
+  LD [M]  sound/pci/snd-ens1371.ko
+  LD [M]  sound/pci/snd-es1938.ko
+  LD [M]  sound/pci/snd-es1968.ko
+  LD [M]  sound/pci/snd-fm801.ko
+  LD [M]  sound/pci/snd-intel8x0.ko
+  LD [M]  sound/pci/snd-intel8x0m.ko
+  LD [M]  sound/pci/snd-maestro3.ko
+  LD [M]  sound/pci/snd-rme32.ko
+  LD [M]  sound/pci/snd-rme96.ko
+  LD [M]  sound/pci/snd-sonicvibes.ko
+  LD [M]  sound/pci/snd-via82xx-modem.ko
+  LD [M]  sound/pci/snd-via82xx.ko
+  LD [M]  sound/pci/trident/snd-trident.ko
+  LD [M]  sound/pci/vx222/snd-vx222.ko
+  LD [M]  sound/pci/ymfpci/snd-ymfpci.ko
+  LD [M]  sound/soundcore.ko
+  LD [M]  sound/synth/emux/snd-emux-synth.ko
+  LD [M]  sound/synth/snd-util-mem.ko
+  LD [M]  sound/usb/6fire/snd-usb-6fire.ko
+  LD [M]  sound/usb/caiaq/snd-usb-caiaq.ko
+  LD [M]  sound/usb/hiface/snd-usb-hiface.ko
+  LD [M]  sound/usb/misc/snd-ua101.ko
+  LD [M]  sound/usb/snd-usb-audio.ko
+  LD [M]  sound/usb/snd-usbmidi-lib.ko
+  LD [M]  sound/usb/usx2y/snd-usb-us122l.ko
+  LD [M]  sound/usb/usx2y/snd-usb-usx2y.ko
+  IHEX    firmware/acenic/tg1.bin
+  IHEX    firmware/acenic/tg2.bin
+  IHEX    firmware/adaptec/starfire_rx.bin
+  IHEX    firmware/adaptec/starfire_tx.bin
+  IHEX    firmware/bnx2x/bnx2x-e1-6.2.9.0.fw
+  IHEX    firmware/bnx2x/bnx2x-e1h-6.2.9.0.fw
+  IHEX    firmware/bnx2x/bnx2x-e2-6.2.9.0.fw
+  IHEX    firmware/bnx2/bnx2-mips-09-6.2.1a.fw
+  IHEX    firmware/bnx2/bnx2-rv2p-09-6.0.17.fw
+  IHEX    firmware/bnx2/bnx2-rv2p-09ax-6.0.17.fw
+  IHEX    firmware/bnx2/bnx2-mips-06-6.2.1.fw
+  IHEX    firmware/bnx2/bnx2-rv2p-06-6.0.15.fw
+  IHEX    firmware/sun/cassini.bin
+  IHEX    firmware/cxgb3/t3b_psram-1.1.0.bin
+  IHEX    firmware/cxgb3/t3c_psram-1.1.0.bin
+  IHEX    firmware/cxgb3/ael2005_opt_edc.bin
+  IHEX    firmware/cxgb3/ael2005_twx_edc.bin
+  IHEX    firmware/cxgb3/ael2020_twx_edc.bin
+  IHEX    firmware/radeon/R100_cp.bin
+  IHEX    firmware/radeon/R200_cp.bin
+  IHEX    firmware/radeon/R300_cp.bin
+  IHEX    firmware/radeon/R420_cp.bin
+  IHEX    firmware/radeon/RS690_cp.bin
+  IHEX    firmware/radeon/RS600_cp.bin
+  IHEX    firmware/radeon/R520_cp.bin
+  IHEX    firmware/radeon/R600_pfp.bin
+  IHEX    firmware/radeon/R600_me.bin
+  IHEX    firmware/radeon/RV610_pfp.bin
+  IHEX    firmware/radeon/RV610_me.bin
+  IHEX    firmware/radeon/RV630_pfp.bin
+  IHEX    firmware/radeon/RV630_me.bin
+  IHEX    firmware/radeon/RV620_pfp.bin
+  IHEX    firmware/radeon/RV620_me.bin
+  IHEX    firmware/radeon/RV635_pfp.bin
+  IHEX    firmware/radeon/RV635_me.bin
+  IHEX    firmware/radeon/RV670_pfp.bin
+  IHEX    firmware/radeon/RV670_me.bin
+  IHEX    firmware/radeon/RS780_pfp.bin
+  IHEX    firmware/radeon/RS780_me.bin
+  IHEX    firmware/radeon/RV770_pfp.bin
+  IHEX    firmware/radeon/RV770_me.bin
+  IHEX    firmware/radeon/RV730_pfp.bin
+  IHEX    firmware/radeon/RV730_me.bin
+  IHEX    firmware/radeon/RV710_pfp.bin
+  IHEX    firmware/radeon/RV710_me.bin
+  IHEX    firmware/av7110/bootcode.bin
+  IHEX    firmware/ttusb-budget/dspbootcode.bin
+  IHEX    firmware/e100/d101m_ucode.bin
+  IHEX    firmware/e100/d101s_ucode.bin
+  IHEX    firmware/e100/d102e_ucode.bin
+  IHEX    firmware/cis/LA-PCM.cis
+  IHEX    firmware/cis/PCMLM28.cis
+  IHEX    firmware/cis/DP83903.cis
+  IHEX    firmware/cis/NE2K.cis
+  IHEX    firmware/cis/tamarack.cis
+  IHEX    firmware/cis/PE-200.cis
+  IHEX    firmware/cis/PE520.cis
+  IHEX    firmware/cis/3CXEM556.cis
+  IHEX    firmware/cis/3CCFEM556.cis
+  IHEX    firmware/cis/MT5634ZLX.cis
+  IHEX    firmware/cis/RS-COM-2P.cis
+  IHEX    firmware/cis/COMpad2.cis
+  IHEX    firmware/cis/COMpad4.cis
+  IHEX    firmware/cis/SW_555_SER.cis
+  IHEX    firmware/cis/SW_7xx_SER.cis
+  IHEX    firmware/cis/SW_8xx_SER.cis
+  IHEX    firmware/ositech/Xilinx7OD.bin
+  IHEX    firmware/advansys/mcode.bin
+  IHEX    firmware/advansys/38C1600.bin
+  IHEX    firmware/advansys/3550.bin
+  IHEX    firmware/advansys/38C0800.bin
+  IHEX    firmware/qlogic/1040.bin
+  IHEX    firmware/qlogic/1280.bin
+  IHEX    firmware/qlogic/12160.bin
+  IHEX    firmware/qlogic/sd7220.fw
+  IHEX    firmware/korg/k1212.dsp
+  IHEX    firmware/ess/maestro3_assp_kernel.fw
+  IHEX    firmware/ess/maestro3_assp_minisrc.fw
+  IHEX    firmware/yamaha/ds1_ctrl.fw
+  IHEX    firmware/yamaha/ds1_dsp.fw
+  IHEX    firmware/yamaha/ds1e_ctrl.fw
+  IHEX    firmware/tehuti/bdx.bin
+  IHEX    firmware/tigon/tg3.bin
+  IHEX    firmware/tigon/tg3_tso.bin
+  IHEX    firmware/tigon/tg3_tso5.bin
+  IHEX    firmware/3com/typhoon.bin
+  HOSTCC  firmware/ihex2fw
+  IHEX    firmware/kaweth/new_code.bin
+  IHEX    firmware/kaweth/trigger_code.bin
+  IHEX    firmware/kaweth/new_code_fix.bin
+  IHEX    firmware/kaweth/trigger_code_fix.bin
+  IHEX    firmware/ti_3410.fw
+  IHEX    firmware/ti_5052.fw
+  IHEX    firmware/mts_cdma.fw
+  IHEX    firmware/mts_gsm.fw
+  IHEX    firmware/mts_edge.fw
+  IHEX    firmware/edgeport/down3.bin
+  IHEX    firmware/cpia2/stv0672_vp4.bin
+  IHEX    firmware/yam/1200.bin
+  IHEX    firmware/yam/9600.bin
+  IHEX2FW firmware/emi26/loader.fw
+  IHEX2FW firmware/emi26/firmware.fw
+  IHEX2FW firmware/emi26/bitstream.fw
+  IHEX2FW firmware/emi62/loader.fw
+  IHEX2FW firmware/emi62/bitstream.fw
+  IHEX2FW firmware/emi62/spdif.fw
+  IHEX2FW firmware/emi62/midi.fw
+  H16TOFW firmware/edgeport/boot.fw
+  H16TOFW firmware/edgeport/boot2.fw
+  H16TOFW firmware/edgeport/down.fw
+  H16TOFW firmware/edgeport/down2.fw
+  IHEX2FW firmware/whiteheat_loader.fw
+  IHEX2FW firmware/whiteheat.fw
+  IHEX2FW firmware/keyspan_pda/keyspan_pda.fw
+  IHEX2FW firmware/keyspan_pda/xircom_pgs.fw</pre>
+<p>At this stage, build is complete. Let's perform installain of modules. This requires root privilege</p>
+<pre class="brush: bash; toolbar: false;"># make modules_install
+  INSTALL Documentation/connector/cn_test.ko
+  INSTALL Documentation/filesystems/configfs/configfs_example_explicit.ko
+  INSTALL Documentation/filesystems/configfs/configfs_example_macros.ko
+  INSTALL arch/x86/crypto/blowfish-x86_64.ko
+  INSTALL arch/x86/crypto/camellia-aesni-avx-x86_64.ko
+  INSTALL arch/x86/crypto/camellia-aesni-avx2.ko
+  INSTALL arch/x86/crypto/camellia-x86_64.ko
+  INSTALL arch/x86/crypto/cast5-avx-x86_64.ko
+  INSTALL arch/x86/crypto/cast6-avx-x86_64.ko
+  INSTALL arch/x86/crypto/crc32-pclmul.ko
+  INSTALL arch/x86/crypto/crc32c-intel.ko
+  INSTALL arch/x86/crypto/crct10dif-pclmul.ko
+  INSTALL arch/x86/crypto/ghash-clmulni-intel.ko
+  INSTALL arch/x86/crypto/salsa20-x86_64.ko
+  INSTALL arch/x86/crypto/serpent-avx-x86_64.ko
+  INSTALL arch/x86/crypto/serpent-avx2.ko
+  INSTALL arch/x86/crypto/serpent-sse2-x86_64.ko
+  INSTALL arch/x86/crypto/sha1-ssse3.ko
+  INSTALL arch/x86/crypto/sha256-ssse3.ko
+  INSTALL arch/x86/crypto/sha512-ssse3.ko
+  INSTALL arch/x86/crypto/twofish-avx-x86_64.ko
+  INSTALL arch/x86/crypto/twofish-x86_64-3way.ko
+  INSTALL arch/x86/crypto/twofish-x86_64.ko
+  INSTALL arch/x86/kernel/cpu/mcheck/mce-inject.ko
+  INSTALL arch/x86/kernel/cpu/microcode/microcode.ko
+  INSTALL arch/x86/kernel/test_nx.ko
+  INSTALL arch/x86/kvm/kvm-amd.ko
+  INSTALL arch/x86/kvm/kvm-intel.ko
+  INSTALL arch/x86/kvm/kvm.ko
+  INSTALL arch/x86/oprofile/oprofile.ko
+  INSTALL crypto/ansi_cprng.ko
+  INSTALL crypto/anubis.ko
+  INSTALL crypto/arc4.ko
+  INSTALL crypto/async_tx/async_memcpy.ko
+  INSTALL crypto/async_tx/async_pq.ko
+  INSTALL crypto/async_tx/async_raid6_recov.ko
+  INSTALL crypto/async_tx/async_tx.ko
+  INSTALL crypto/async_tx/async_xor.ko
+  INSTALL crypto/async_tx/raid6test.ko
+  INSTALL crypto/authenc.ko
+  INSTALL crypto/authencesn.ko
+  INSTALL crypto/blowfish_common.ko
+  INSTALL crypto/blowfish_generic.ko
+  INSTALL crypto/camellia_generic.ko
+  INSTALL crypto/cast5_generic.ko
+  INSTALL crypto/cast6_generic.ko
+  INSTALL crypto/cast_common.ko
+  INSTALL crypto/ccm.ko
+  INSTALL crypto/cmac.ko
+  INSTALL crypto/crc32.ko
+  INSTALL crypto/crypto_null.ko
+  INSTALL crypto/crypto_user.ko
+  INSTALL crypto/cts.ko
+  INSTALL crypto/deflate.ko
+  INSTALL crypto/des_generic.ko
+  INSTALL crypto/fcrypt.ko
+  INSTALL crypto/gcm.ko
+  INSTALL crypto/ghash-generic.ko
+  INSTALL crypto/khazad.ko
+  INSTALL crypto/lz4.ko
+  INSTALL crypto/lz4hc.ko
+  INSTALL crypto/md4.ko
+  INSTALL crypto/michael_mic.ko
+  INSTALL crypto/pcbc.ko
+  INSTALL crypto/pcrypt.ko
+  INSTALL crypto/rmd128.ko
+  INSTALL crypto/rmd160.ko
+  INSTALL crypto/rmd256.ko
+  INSTALL crypto/rmd320.ko
+  INSTALL crypto/salsa20_generic.ko
+  INSTALL crypto/seed.ko
+  INSTALL crypto/serpent_generic.ko
+  INSTALL crypto/sha512_generic.ko
+  INSTALL crypto/tcrypt.ko
+  INSTALL crypto/tea.ko
+  INSTALL crypto/tgr192.ko
+  INSTALL crypto/twofish_common.ko
+  INSTALL crypto/twofish_generic.ko
+  INSTALL crypto/vmac.ko
+  INSTALL crypto/wp512.ko
+  INSTALL crypto/xcbc.ko
+  INSTALL crypto/xor.ko
+  INSTALL crypto/zlib.ko
+  INSTALL drivers/acpi/acpi_ipmi.ko
+  INSTALL drivers/acpi/acpi_pad.ko
+  INSTALL drivers/acpi/custom_method.ko
+  INSTALL drivers/acpi/ec_sys.ko
+  INSTALL drivers/acpi/sbs.ko
+  INSTALL drivers/acpi/sbshc.ko
+  INSTALL drivers/acpi/video.ko
+  INSTALL drivers/ata/acard-ahci.ko
+  INSTALL drivers/ata/ahci_platform.ko
+  INSTALL drivers/ata/ata_generic.ko
+  INSTALL drivers/ata/pata_acpi.ko
+  INSTALL drivers/ata/pata_ali.ko
+  INSTALL drivers/ata/pata_amd.ko
+  INSTALL drivers/ata/pata_artop.ko
+  INSTALL drivers/ata/pata_atiixp.ko
+  INSTALL drivers/ata/pata_atp867x.ko
+  INSTALL drivers/ata/pata_cmd640.ko
+  INSTALL drivers/ata/pata_cmd64x.ko
+  INSTALL drivers/ata/pata_cypress.ko
+  INSTALL drivers/ata/pata_efar.ko
+  INSTALL drivers/ata/pata_hpt366.ko
+  INSTALL drivers/ata/pata_hpt37x.ko
+  INSTALL drivers/ata/pata_hpt3x2n.ko
+  INSTALL drivers/ata/pata_hpt3x3.ko
+  INSTALL drivers/ata/pata_it8213.ko
+  INSTALL drivers/ata/pata_it821x.ko
+  INSTALL drivers/ata/pata_jmicron.ko
+  INSTALL drivers/ata/pata_marvell.ko
+  INSTALL drivers/ata/pata_mpiix.ko
+  INSTALL drivers/ata/pata_netcell.ko
+  INSTALL drivers/ata/pata_ninja32.ko
+  INSTALL drivers/ata/pata_ns87410.ko
+… … … … … … … … … … … … … ... 
+… … … … … … … … … … … … … ... 
+… … … … … … … … … … … … … ... 
+  INSTALL /lib/firmware/korg/k1212.dsp
+  INSTALL /lib/firmware/ess/maestro3_assp_kernel.fw
+  INSTALL /lib/firmware/ess/maestro3_assp_minisrc.fw
+  INSTALL /lib/firmware/yamaha/ds1_ctrl.fw
+  INSTALL /lib/firmware/yamaha/ds1_dsp.fw
+  INSTALL /lib/firmware/yamaha/ds1e_ctrl.fw
+  INSTALL /lib/firmware/tehuti/bdx.bin
+  INSTALL /lib/firmware/tigon/tg3.bin
+  INSTALL /lib/firmware/tigon/tg3_tso.bin
+  INSTALL /lib/firmware/tigon/tg3_tso5.bin
+  INSTALL /lib/firmware/3com/typhoon.bin
+  INSTALL /lib/firmware/emi26/loader.fw
+  INSTALL /lib/firmware/emi26/firmware.fw
+  INSTALL /lib/firmware/emi26/bitstream.fw
+  INSTALL /lib/firmware/emi62/loader.fw
+  INSTALL /lib/firmware/emi62/bitstream.fw
+  INSTALL /lib/firmware/emi62/spdif.fw
+  INSTALL /lib/firmware/emi62/midi.fw
+  INSTALL /lib/firmware/kaweth/new_code.bin
+  INSTALL /lib/firmware/kaweth/trigger_code.bin
+  INSTALL /lib/firmware/kaweth/new_code_fix.bin
+  INSTALL /lib/firmware/kaweth/trigger_code_fix.bin
+  INSTALL /lib/firmware/ti_3410.fw
+  INSTALL /lib/firmware/ti_5052.fw
+  INSTALL /lib/firmware/mts_cdma.fw
+  INSTALL /lib/firmware/mts_gsm.fw
+  INSTALL /lib/firmware/mts_edge.fw
+  INSTALL /lib/firmware/edgeport/boot.fw
+  INSTALL /lib/firmware/edgeport/boot2.fw
+  INSTALL /lib/firmware/edgeport/down.fw
+  INSTALL /lib/firmware/edgeport/down2.fw
+  INSTALL /lib/firmware/edgeport/down3.bin
+  INSTALL /lib/firmware/whiteheat_loader.fw
+  INSTALL /lib/firmware/whiteheat.fw
+  INSTALL /lib/firmware/keyspan_pda/keyspan_pda.fw
+  INSTALL /lib/firmware/keyspan_pda/xircom_pgs.fw
+  INSTALL /lib/firmware/cpia2/stv0672_vp4.bin
+  INSTALL /lib/firmware/yam/1200.bin
+  INSTALL /lib/firmware/yam/9600.bin
+  DEPMOD  3.14.17</pre>
+
+<p>It installs kernel modules into /lib/modules/3.14.17</p>
+<p>To install the kernel into system run make install. After running the command it looks like this,</p>
+<pre class="brush: bash; toolbar: false;"># make install
+sh /home/Atique/kernel_lu/linux-3.14.17_ws/arch/x86/boot/install.sh 3.14.17 arch/x86/boot/bzImage \
+	System.map "/boot"</pre>
+
+<p>After reboot and then booting to new kernel lots of linux penguin image is displayed on the startscreen which is amazing if you haven't seen before!</p>
+<pre class="brush: bash; toolbar: false;">$ uname -a
+Linux localhost.localdomain 3.14.17 #1 SMP Thu Jan 8 23:26:57 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+# systemd-analyze 
+Startup finished in 4.961s (firmware) + 23.276s (loader) + 2.516s (kernel) + 6.158s (initrd) + 1min 45.159s (userspace) = 2min 22.071s</pre>
+
+<p>Which is 131 percent slower than kernel-3.17.8-200</p>
+<pre class="brush: bash; toolbar: false;">$ uname -a
+Linux localhost.localdomain 3.17.8-200.fc20.x86_64 #1 SMP Thu Jan 8 23:26:57 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+# systemd-analyze 
+Startup finished in 9.763s (firmware) + 6.333s (loader) + 2.391s (kernel) + 6.132s (initrd) + 36.758s (userspace) = 1min 1.379s</pre>
+
+<h3>Removing installed kernel from the system</h3>
+<p>You cannot probably perform an make uninstall for a kernel. However, after the testing of the kernel if you are wondering how to remove the old kernel from boot you might have to do it manually i.e., remove modules from /lib/modules/kernel-version, several files from /boot (you can recognize them by version number)</p>
+
+<p>For your information, files added in /boot are
+</p><ul><li>vmlinuz-3.14.17</li>
+<li>System.map-3.14.17</li>
+<li>initramfs-3.14.17.img</li></ul>
+and probably it adds some more: soft links are created:</p>
+<ul><li>vmlinuz -&gt; /boot/vmlinuz-3.14.17</li>
+<li>System.map -&gt; /boot/System.map-3.14.17</li></ul>
+
+<h4>References</h4>
+<ul><li><a href="http://www.howopensource.com/2011/08/how-to-install-compile-linux-kernel-3-0-in-fedora-15-and-14/">howopensource - How to compile Linux Kernel in Fedora</a></li>
+<li><a href="http://bodhizazen.net/Tutorials/kernel">bodhizazen - Compile Kernel</a></li></ul>
+
+<br>
+<p>Commit (r9): January 27, 2015</p>

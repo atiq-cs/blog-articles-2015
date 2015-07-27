@@ -1,0 +1,133 @@
+<h2>Introduction</h2>
+
+<p>To write Win32 application or MFC application using C++ you may decide to support Unicode or not. TCHAR library provides us macros so that we can easily switch between those two options.&nbsp;</p>
+
+<h2>Tips and Tricks&nbsp;</h2>
+
+<p>If you want to use Unicode in project properties if Visual Studio Solution Explorer, you have to select &quot;Use Unicode Character Set&quot; as character set. After that, you can easily use Unicode strings in your code wrapping with a macro. The same macro works fine even if you selected not to use &quot;Unicode Character Set&quot;&nbsp;and you use the character set that ANSI supports for example, english alphabets.&nbsp;Code remains same while you have the advantage.&nbsp;</p>
+
+<p>To use a Unicode <code>string </code>as a function parameter, wrap it with macro <code>_T</code> or <code>TEXT </code>macro. For example:</p>
+
+<pre lang="C++">
+AfxMessageBox(_T(&quot;You clicked it!&quot;));  </pre>
+
+<p><code>_T()</code> and <code>TEXT()</code> are macros from <code>tchar </code>header file. <code>TCHAR </code>library automatically maps functions to Unicode when Unicode is defined. Using <code>TCHAR </code>library helps us to move code to multibyte stream (or unicode) whenever required. Try to avoid primitive data type <code>char</code> array or <code>char *</code>. This is because before using them in your controls, you have to convert them. Repetitive conversion may be tedious.&nbsp;</p>
+
+<p>Use <code>TCHAR</code> instead of <code>char </code>and use <code>TCHAR*</code> instead of <code>char*</code>. <code>TCHAR*</code> can be written <code>LPTSTR</code>. For <code>const TCHAR*</code>, you may write <code>LPCTSTR</code> which is required when a <code>string </code>is passed as an argument to a function where modification should be restricted.</p>
+
+<p>To calculate length of <code>string</code>s, use <code>_tcslen </code>function:</p>
+
+<pre lang="C++">
+len = _tcslen(str); </pre>
+
+<p>To compare <code>string</code>s instead of <code>strcmp </code>and <code>strncmp</code>, use <code>_tcscmp </code>and <code>_tcsncmp</code>. Here&rsquo;s an example:</p>
+
+<pre lang="C++">
+if (!_tcsncmp(line, _T(&quot;desiredtext&quot;), 11))
+    AfxMessageBox(_T(&ldquo;Got desired text.&rdquo;));</pre>
+
+<p>For copying <code>string _tcscpy_s</code> and <code>_tcsncpy_s</code> instead of <code>strcpy </code>and <code>strncpy</code>:</p>
+
+<pre lang="C++">
+_tcsncpy_s(dest, srcstr, 20);</pre>
+
+<p>Note, <code>strpy </code>or <code>_tcscpy_s</code>, don&rsquo;t put a <code>null </code>after copying the <code>string </code>so remember to set <code>null </code>after copying the <code>string </code>when required.</p>
+
+<p>For <code>string </code>concatenation, use <code>_tcscat_s</code> and <code>_tcsncat_s</code> instead of <code>strcat </code>and <code>strncat</code>. Here, the 2<sup>nd</sup> parameter is the size of the destination <code>string</code>.</p>
+
+<pre lang="C++">
+_tcsncat_s(timestamp, 20, str, i);</pre>
+
+<p>For splitting tokens, use <code>_tcstok_s</code> instead of <code>strtok</code>.</p>
+
+<pre lang="C++">
+LPTSTR  next_token;
+token = _tcstok_s(str, delim, &amp;next_token);</pre>
+
+<p>To convert a <code>string </code>to integer, you can use <code>_ttoi()</code> function.</p>
+
+<pre lang="C++">
+CString str = _T(&quot;10&quot;);
+CString temp;
+temp.Format(_T(&quot; length: %d&quot;), _ttoi(str));
+AfxMessageBox(str+temp);</pre>
+
+<p>When I didn&#39;t know about this handy function I wrote the following function to do the same task. Having a look at the function may help you as an example code:&nbsp;</p>
+
+<pre lang="C++">
+int GetEquivValue(TCHAR ch, int base) {
+    int diff = _T(&#39;a&#39;) - _T(&#39;A&#39;);
+
+    // Invalid base
+    if (base &gt;= 16)
+        return 0;
+
+    if (base == 16) {
+        // make upper case if lowercase
+        if (ch &gt;= _T(&#39;a&#39;) &amp;&amp; ch &lt;= _T(&#39;z&#39;))
+            ch -= diff;
+
+        diff = _T(&#39;A&#39;) - _T(&#39;0&#39;);
+
+        if (ch &gt;= _T(&#39;A&#39;) &amp;&amp; ch &lt;= _T(&#39;F&#39;))
+            return (ch-diff);
+    }
+
+    if (ch &gt;= _T(&#39;0&#39;) &amp;&amp; ch &lt;= _T(&#39;9&#39;))
+        return (ch - _T(&#39;0&#39;));
+    return 0;
+}
+
+int SAatoib(LPTSTR  str, int base) {
+    int res = 0;
+    int i, len, tmp;
+
+    len = _tcslen(str);
+    for (i=0; i&lt;len; i++) {
+        tmp = GetEquivValue(str[i], base);
+        res = res*base + tmp;
+    }
+    return res;
+} </pre>
+
+<p>Using these functions to convert a <code>string </code>to decimal number, you have to write like this:&nbsp;</p>
+
+<pre lang="C++">
+int decVal = SAatoib((LPTSTR )NumStr, 10);  </pre>
+
+<p>To convert a <code>string </code>to hexadecimal number, you have to write like this:&nbsp;</p>
+
+<pre lang="C++">
+int decVal = SAatoib((LPTSTR )NumStr, 16);  </pre>
+
+<p>To convert a <code>string </code>to octal number, you have to write:&nbsp;</p>
+
+<pre lang="C++">
+int decVal = SAatoib((LPTSTR )NumStr, 8);  </pre>
+
+<p>To format the <code>string </code>like <code>printf</code>, you can use <code>CString::Format </code>function. For example, to get IP address:&nbsp;</p>
+
+<pre lang="C++">
+unsigned long int ipsegval[4] = {1, 2, 3, 4};
+CString ip;
+ip.Format(_T(&quot;%u.%u.%u.%u&quot;), ipsegval[0], ipsegval[1], ipsegval[2], ipsegval[3]);</pre>
+
+<p>For example, you have a <code>CString</code>. But you need it as <code>const char*</code> or <code>char*</code> The cast to <code>LPCTSTR</code> from <code>CString </code>is a valid one, but cast to <code>const char*</code> isn&rsquo;t valid. But there is a way. Here&rsquo;s an example:</p>
+
+<pre lang="C++">
+CString ipaddrstr(_T(&ldquo;1.2.3.4&rdquo;));
+CStringA ipaddrstrA(ipaddrstr);
+ipaddr = inet_addr(ipaddrstrA);</pre>
+
+<p><strong>Note</strong>: <code>inet_addr</code> function requires <code>char *</code>.</p>
+
+<p>I hope this post helps beginners.&nbsp;</p>
+
+<h2>History&nbsp;</h2>
+
+<ul>
+	<li>16th January, 2012: Version 4&nbsp;</li>
+	<li>11<sup>th</sup> May, 2011: Version 3</li>
+	<li>9<sup>th</sup> May, 2011: Version 2</li>
+	<li>6<sup>th</sup> May, 2011: Initial version</li>
+</ul>

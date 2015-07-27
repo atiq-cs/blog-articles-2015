@@ -1,0 +1,287 @@
+<p>If you have BanglaLion prepaid or postpaid connection and if you are a powershell guy then this script will be useful. I'll post the entire script here. Let's name the script file as "Show-Blpackageinfo.ps1"</p>
+<p>If you run this script you will see something like this:</p>
+<pre class="brush: plain;">$ .\Show-Blpackageinfo.ps1
+Retrieving connection info
+Sending post data               [OK]
+Remaining volume: 11,099.51 MB
+Expiry Date: 02/25/2014 23:59:59
+Remaining days: 3</pre>
+<p>The script contains two functions:</p>
+<ol>
+<li>ShowBanglaLionInfo</li>
+<li>DownloadHttpFilebyPostData</li>
+</ol>
+<p> ShowBanglaLionInfo has 3 arguments:</p>
+<ol>
+<li>username</li>
+<li>password</li>
+<li>whether it is prepaid package or not</li>
+</ol>
+<p>Hence a call to this function in a powershell script looks like this:</p>
+<pre class="brush: plain;">ShowBanglaLionInfo "bclnw.60110" "123456" $true</pre>
+<p>Please use correct username and password. Otherwise, script does not work. If your connection is postpaid call the function like this,</p>
+<pre class="brush: plain;">ShowBanglaLionInfo "bclnw.60110" "123456" $false</pre>
+<p>As you can understand last argument means whether modem is prepaid or not. Function DownloadHttpFilebyPostData is used to post login information by <strong>ShowBanglaLionInfo</strong> function.</p>
+<p>Function <strong>ShowBanglaLionInfo</strong> looks like this:</p>
+<pre class="brush: ps; first-line: 1; tab-size: 5; toolbar: false;"># Date  : 06/14/2011 11:58:47
+# Author: Saint Atique
+# Desc  : Show BanglaLion Connection Info
+
+function ShowBanglaLionInfo([string] $userName, [string] $passWord, [bool]$isPrepaidPackage) {
+    $outputFilePath=".\temp.html"
+
+    if (Test-Path $outputFilePath) { rm $outputFilePath }
+    Write-Host "Retrieving connection info"
+    write-Host -nonewline "Sending post data"
+    
+    $postString = "login=" + $userName + "&amp;pass=" + $passWord
+    
+    $http_request = DownloadHttpFilebyPostData "http://care.banglalionwimax.com/radauth.php" $postString
+    if ($http_request -eq $null) {
+        Write-Host "http_request is null"
+        break
+    }
+    elseif ($http_request.statusText -eq $null) {
+        Write-Host "http_request status text is null"
+    }
+    elseif ($http_request.statusText.Equals("OK")) {
+        Write-Host -foregroundcolor green "`t`t[OK]"
+        $http_request.responseText | Out-File $outputFilePath
+    }
+    else {
+        Write-Host -foregroundcolor red "`t`t[Failed]"
+        break
+    }
+
+    $len = 0
+    $res = [string] (select-string $outputFilePath -pattern "&lt;TD&gt;&lt;B&gt;.* Mb&lt;/B&gt;&lt;/TD&gt;")
+    $len = $res.LastIndexOf(" MB")+3
+    $startpos = $res.IndexOf("&lt;")+7
+    $offset = $len - $startpos
+    if ($offset -lt 0) {
+        Write-Host "Error in data!"
+        break
+    }
+    $RemainingVolume = $res.SubString($startpos, $offset)
+    # in pattern we need backslash in IndexOf we don't need
+    $res = [string] (select-string $outputFilePath -pattern "DateCompare\(`'.*`'")
+    if ($isPrepaidPackage) {
+        $len = $res.LastIndexOf("`',")
+    }
+    else {
+        $len = $res.LastIndexOf("`')`"&gt;")
+    }
+    
+    if ($len -lt 0) {
+        Write-Host $res
+        break
+    }
+    if ($isPrepaidPackage) {
+        $startpos = $res.IndexOf("DateCompare(`'")+13
+    }
+    else {
+        $startpos = $res.IndexOf("DateCompare(`'`'")+16
+    }
+    $offset = $len - $startpos
+    $ExpirationDate = $res.SubString($startpos, $offset)
+    $DateStr = $ExpirationDate.Split("/ ")
+    $DateExp = new-object System.DateTime($DateStr[2], $DateStr[1], $DateStr[0], 20, 30, 52)
+    $DateCurrent = [System.DateTime]::Now
+    $diff = new-object System.TimeSpan
+    $diff = $DateExp.Subtract($DateCurrent)
+    $ExpDay = $diff.Days
+
+    if ($res) {
+        Write-Host "Remaining volume: $RemainingVolume"
+        Write-Host "Exp Date: $DateExp"
+        Write-Host "Remaining days: $ExpDay"
+        if ($ExpDay -eq 0) {
+            Write-Host -foregroundcolor red "Recharge within today to avoid losing volume!"
+        }
+        elseif ($ExpDay -lt 0) {
+            Write-Host -foregroundcolor red "Connection validity already expired!"
+        }
+        # for singular number
+        elseif ($ExpDay -eq 1) {
+            Write-Host -foregroundcolor red "Recharge within" $ExpDay "day to avoid losing volume!"
+        }
+        elseif ($ExpDay -lt 3) {
+            Write-Host -foregroundcolor red "Recharge within" $ExpDay "days to avoid losing volume!"
+        }
+        else {
+            Write-Host -nonewline "Remaining days: "
+            Write-Host -foregroundcolor green $ExpDay
+        }
+    }
+    else {
+        Write-Host "Didn't find the pattern may be login failed!"
+    }
+
+    if (Test-Path $outputFilePath) { rm $outputFilePath }
+}
+</pre>
+<p>Here is the function to post data to a URL and return the page:</p>
+<pre class="brush: ps; first-line: 1; tab-size: 5; toolbar: false;"># Date  : 06/14/2011 11:58:47
+# Author: Saint Atique
+# msxml trick is from microsoft's documentation
+# Desc  : Post Data to a URL using COM object
+
+function DownloadHttpFilebyPostData([string]$url, [string]$parameters) {
+    $http_request = New-Object -ComObject Msxml2.XMLHTTP
+    $http_request.open('POST', $url, $false)
+    $http_request.setRequestHeader("Content-type", 
+      "application/x-www-form-urlencoded")
+    $http_request.setRequestHeader("Content-length", $parameters.length)
+    $http_request.setRequestHeader("Connection", "close")
+    try {
+        $http_request.send($parameters)
+    }
+    catch {
+        $expStatus = $http_request.statusText
+        Write-Host -nonewline " on $expStatus"
+        $http_request = $null
+    }
+    return $http_request
+}</pre>
+<p>Combined the script looks like this,</p>
+<pre class="brush: ps; first-line: 1; tab-size: 5; toolbar: false;"># Date  : 06/14/2011 11:58:47
+# Update: July 01, 2014
+# Author: Saint Atique
+# Desc  : Show BanglaLion Connection Info
+
+function Main() {
+    # test call, please replace id, password and $false to $true if
+    # your connection is prepaid instead of postpaid
+    ShowBanglaLionInfo "bclnw.60110" "123456" $false
+}
+
+function ShowBanglaLionInfo([string] $userName, [string] $passWord, [bool]$isPrepaidPackage) {
+    $outputFilePath=".\temp.html"
+ 
+    if (Test-Path $outputFilePath) { rm $outputFilePath }
+    Write-Host "Retrieving connection info"
+    write-Host -nonewline "Sending post data"
+     
+    $postString = "login=" + $userName + "&pass=" + $passWord
+     
+    $http_request = DownloadHttpFilebyPostData "http://care.banglalionwimax.com/radauth.php" $postString
+    if ($http_request -eq $null) {
+        Write-Host "http_request is null"
+        break
+    }
+    elseif ($http_request.statusText -eq $null) {
+        Write-Host "http_request status text is null"
+    }
+    elseif ($http_request.statusText.Equals("OK")) {
+        Write-Host -foregroundcolor green "`t`t[OK]"
+        $http_request.responseText | Out-File $outputFilePath
+
+        if (select-string $outputFilePath -pattern "Your session get expired") {
+            Write-Host -foregroundcolor red "`t`t[Failed]"
+            Write-Host "Reason: session expired"
+            exit
+        }
+        elseif (select-string $outputFilePath -pattern "Invalid Password.               </b>") {
+            Write-Host -foregroundcolor red "`t`t[Failed]"
+            Write-Host "Response: invalid password!"
+            exit
+        }
+        else {
+            Write-Host -foregroundcolor green "`t`t[OK]"
+        }
+
+    }
+    else {
+        Write-Host -foregroundcolor red "`t`t[Failed]"
+        break
+    }
+ 
+    $len = 0
+    $res = [string] (select-string $outputFilePath -pattern "<TD><B>.* Mb</B></TD>")
+    $len = $res.LastIndexOf(" MB")+3
+    $startpos = $res.IndexOf("<")+7
+    $offset = $len - $startpos
+    if ($offset -lt 0) {
+        Write-Host "Error in data!"
+        break
+    }
+    $RemainingVolume = $res.SubString($startpos, $offset)
+    # in pattern we need backslash in IndexOf we don't need
+    $res = [string] (select-string $outputFilePath -pattern "DateCompare\(`'.*`'")
+    if ($isPrepaidPackage) {
+        $len = $res.LastIndexOf("`',")
+    }
+    else {
+        $len = $res.LastIndexOf("`')`">")
+    }
+     
+    if ($len -lt 0) {
+        Write-Host $res
+        break
+    }
+    if ($isPrepaidPackage) {
+        $startpos = $res.IndexOf("DateCompare(`'")+13
+    }
+    else {
+        $startpos = $res.IndexOf("DateCompare(`'`'")+16
+    }
+    $offset = $len - $startpos - 3
+    $ExpirationDate = $res.SubString($startpos, $offset)
+    $DateStr = $ExpirationDate.Split("/ ")
+    $DateExp = new-object System.DateTime($DateStr[2], $DateStr[1], $DateStr[0], 23, 59, 59)
+    $DateCurrent = [System.DateTime]::Now
+    $diff = new-object System.TimeSpan
+    $diff = $DateExp.Subtract($DateCurrent)
+    $ExpDay = $diff.Days
+ 
+    if ($res) {
+        Write-Host "Remaining volume: $RemainingVolume"
+        Write-Host "Exp Date: $DateExp"
+        if ($ExpDay -eq 0) {
+            Write-Host -foregroundcolor red "Recharge within today to avoid losing volume!"
+        }
+        elseif ($ExpDay -lt 0) {
+            Write-Host -foregroundcolor red "Connection validity already expired!"
+        }
+        # for singular number
+        elseif ($ExpDay -eq 1) {
+            Write-Host -foregroundcolor red "Recharge within" $ExpDay "day to avoid losing volume!"
+        }
+        elseif ($ExpDay -lt 3) {
+            Write-Host -foregroundcolor red "Recharge within" $ExpDay "days to avoid losing volume!"
+        }
+        else {
+            Write-Host -nonewline "Remaining days: "
+            Write-Host -foregroundcolor green $ExpDay
+        }
+    }
+    else {
+        Write-Host "Didn't find the pattern may be login failed!"
+    }
+ 
+    if (Test-Path $outputFilePath) { rm $outputFilePath }
+}
+
+function DownloadHttpFilebyPostData([string]$url, [string]$parameters) {
+    $http_request = New-Object -ComObject Msxml2.XMLHTTP
+    $http_request.open('POST', $url, $false)
+    $http_request.setRequestHeader("Content-type", 
+      "application/x-www-form-urlencoded")
+    $http_request.setRequestHeader("Content-length", $parameters.length)
+    $http_request.setRequestHeader("Connection", "close")
+    try {
+        $http_request.send($parameters)
+    }
+    catch {
+        $expStatus = $http_request.statusText
+        Write-Host -nonewline " on $expStatus"
+        $http_request = $null
+    }
+    return $http_request
+}
+ 
+Main</pre>
+
+<p>Save it on a file and call from powershell to automate viewing info of Banglalion.</p>
+<br />
+<p>Update (r3) - July 01, 2014</p>

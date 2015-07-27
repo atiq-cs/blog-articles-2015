@@ -1,0 +1,893 @@
+<ul class="download">
+	<li><a href="WMPNativeSubtitle_cp_release.x64-2014-05-08__64_bit_.zip">Download plugin release x64 (64 bit) - 484.4 KB</a></li>
+	<li><a href="WMPNativeSubtitle_cp_release.x86-2014-05-08__32_bit_.zip">Download plugin release x86 (32 bit) - 534.4 KB</a></li>
+	<li><a href="WMPNativeSubtitle_source_cp.x64_2014-05-06__64_bit_.zip">Download source project x64 (64 bit) - 48.9 KB</a></li>
+	<li><a href="WMPNativeSubtitle_source_cp.x86_2014-05-06__32_bit_.zip">Download source project x86 (32 bit) - 48.7 KB</a></li>
+</ul>
+
+<h2>Table of Contents</h2>
+
+<ul>
+	<li><a href="#heading01">Introduction</a>
+
+	<ul>
+		<li><a href="#heading0001">The Problem</a></li>
+	</ul>
+	</li>
+	<li><a href="#heading02">Background</a>
+	<ul>
+		<li><a href="#heading0201">Popular Solutions using Other Players</a></li>
+		<li><a href="#heading0202">Popular Solutions using WMP Directshow</a></li>
+		<li><a href="#heading0203">WMP &#39;Native&#39; Solution (Primary focus of this article)</a></li>
+	</ul>
+	</li>
+	<li><a href="#heading03">Developing plugin for Windows Media Player</a>
+	<ul>
+		<li><a href="#heading0301">Setting up Plugin Wizard with Visual Studio</a></li>
+		<li><a href="#heading0302">Choosing Plugin Type</a></li>
+	</ul>
+	</li>
+	<li><a href="#heading04">Code Analysis</a>
+	<ul>
+		<li><a href="#heading0401">Core Logic</a></li>
+		<li><a href="#heading0402">Basic Functions and Use of Code</a></li>
+	</ul>
+	</li>
+	<li><a href="#heading05">SubRip to SAMI Conversion</a>
+	<ul>
+		<li><a href="#heading0501">Introduction</a></li>
+		<li><a href="#heading0502">Conversion - Core Logic</a></li>
+		<li><a href="#heading0503">Handling Text Encoding Formats During File I/O</a></li>
+		<li><a href="#heading0504">Where are encoding and decoding procedures?</a></li>
+	</ul>
+	</li>
+	<li><a href="#heading06">Plugin Properties/Configuration Dialog Box</a>
+	<ul>
+		<li><a href="#heading0601">Implementation</a></li>
+	</ul>
+	</li>
+	<li><a href="#heading07">How does the Plugin Support Other Languages and Unicode?</a></li>
+	<li><a href="#heading08">Features yet to implement</a></li>
+	<li><a href="#heading09">Source and Builds</a>
+	<ul>
+		<li><a href="#heading0901">Acquiring Source</a></li>
+		<li><a href="#heading0902">64 bit builds</a></li>
+		<li><a href="#heading0903">32 bit builds</a></li>
+	</ul>
+	</li>
+	<li><a href="#heading10">Enabling Caption/Subtitle</a></li>
+	<li><a href="#heading11">Installing Plugin without building from Code</a></li>
+	<li><a href="#heading12">Tips and Tricks</a></li>
+	<li><a href="#heading13">Conclusion</a></li>
+</ul>
+
+<h2><a id="heading01" name="heading01">Introduction</a></h2>
+
+<p>Here&#39;s a screenshot of Windows Media Player with the plugin running:</p>
+
+<p><img src="Despicable_Me2_screenshot_plugin_running.png" /></p>
+
+<p>This article discusses implementation, logic, source code and building procedure of a Subtitle Plug-in for Windows Media Player. If you are interested in understanding the source-code you can go through the code related discussions. Otherwise, to install this plugin you can skip to the section, <a href="#heading11">Installing Plug-in without building from Code</a>. Updated source-code of the project is available at <a href="https://code.google.com/p/wmp-native-subtitle-plugin/source/browse/">Google Code</a></p>
+
+<h3><a id="heading0001" name="heading0001">The Problem</a></h3>
+
+<p>While most of the players support common formats (srt, sub, ssa/ass) of captions/subtitles, still now Windows Media Player (WMP) does not support them or feature has not been implemented to render captions directory from them. For this reason, we don&rsquo;t find a way to enable subtitles for common formats in WMP. However, it supports SAMI captions. In this article, we are going develop a plugin to support other types of captions such as subrip (srt).</p>
+
+<p>Let&rsquo;s briefly talk about solutions that are available.</p>
+
+<h2><a id="heading02" name="heading02">Background</a></h2>
+
+<h3><a id="heading0201" name="heading0201">Popular Solutions using Other Players</a></h3>
+
+<p>One of the most popular alternative is <a href="http://en.wikipedia.org/wiki/DirectVobSub">DirectVobSub</a>. Forked from VobSub and previously known as VSFilter it supports 8 popular formats of subtitles/captions. Players such as <a href="http://www.videolan.org/">VLC</a>, <a href="http://mpc-hc.org">Media Player Classic</a> and <a href="http://www.kmplayer.com/">KMPlayer</a> uses it to render subtitles and uses directshow to display them in Windows.</p>
+
+<p>One interesting player is <a href="http://www.divx.com/en/software/player">DivX Player</a> which uses Microsoft Media Foundation to render Videos and Captions and, therefore, they don&#39;t use DirectVobSub.</p>
+
+<h3><a id="heading0202" name="heading0001">Popular Solutions using WMP Directshow</a></h3>
+
+<p>With updates to WMP it still includes <a href="http://en.wikipedia.org/wiki/DirectShow">directshow</a> along with <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms694197(v=vs.85).aspx">Media Foundation</a>. Therefore, it is possible to enable subtitles using directshow filters. Following directshow filter based projects can enable subtitle on WMP:</p>
+
+<ul class="compactlist">
+	<li><a href="http://shark007.net/win8codecs.html">Win8Codec</a> by Shark007 (for Windows 7 and 8)</li>
+	<li><a href="http://www.codecguide.com/about_kl.htm">K-Lite Codec</a> (Works well on WMP 9 and earlier)</li>
+	<li><a href="http://www.cccp-project.net/">Combined Community Codec Pack</a></li>
+	<li><a href="http://www.free-codecs.com/download/directvobsub.htm">DirectVobSub</a></li>
+</ul>
+
+<h3><a id="heading0203" name="heading0001">WMP &#39;Native&#39; Solution</a></h3>
+
+<p>Recent editions of Windows Media Player uses Microsoft Media Foundation. Media Foundation has some advantages and performance improvements. Using a directshow filter to render captions with Media Foundation hurts that advancement. Performance issue is noticeable sometimes. It is why, our target is to enable captions in WMP for some unsupported subtitle formats without altering media foundation pipeline. Here is a project that does not use direct-show: <a href="http://sourceforge.net/projects/wmpsub/files/">http://sourceforge.net/projects/wmpsub/files/</a> and meets mentioned goals. However, this project is not open-source and does not give us interesting development scenario.</p>
+
+<p>Our target is to build a plugin for Windows Media Player that will:</p>
+
+<ul>
+	<li>Create supported SAMI caption from unsupported format</li>
+	<li>Enable displaying this caption while playing the video</li>
+	<li>Provide settings to configure this plugin</li>
+</ul>
+
+<p>Because of the plugin we&#39;ll be able to load captions with Video when opened with Media Player.</p>
+
+<h2><a id="heading03" name="heading03">Developing plugin for Windows Media Player</a></h2>
+
+<h3><a id="heading0301" name="heading0301">Setting up Plugin Wizard with Visual Studio</a></h3>
+
+<p><a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd758070(v=vs.85).aspx">Windows Media Player SDK on msdn</a> provides documentation on development of Windows Media Player Plug-ins. Therefore, for detailed documentation on the subject please navigate to <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd564682(v=vs.85).aspx" target="_blank" title="Documentation on Windows Media Player Plug-ins">Windows Media Player Plug-ins on msdn</a>.</p>
+
+<p>First step in developing WMP Plugin is to install plugin wizard. Please follow instructions at <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd563014(v=vs.85).aspx" target="_blank" title="Microsoft MSDN - Getting Started with the Plug-in Wizard">Getting Started with the Plug-in Wizard</a>. The webpage suggests that you install &quot;Windows SDK, which includes the Windows Media Player SDK&quot;. Regarding this, not all Windows SDK include Windows Media Player SDK. Specifically, Windows SDK 7.0 provides this. I have not been able find one with Windows SDK 8.</p>
+
+<p>According to the documentation page, you have to modify wmpwiz.vsz to fix Wizard Version and absolute path for Wizard location to make the Wizard for your Visual Studio. Wizard version has to be set according to your Visual Studio Version. For example, 11.0 is for Visual Studio 2012 and, 12.0 is for Visual Studio 2013. Absolute path can be set to the location where your wizard setup files exist and can be different based on where have extracted the SDK. If you have installed the SDK, default location works well. Here&#39;s a sample wmpwiz.vsz I am using for Visual Studio 2013.</p>
+
+<pre lang="C++">
+VSWIZARD 7.0
+Wizard=VsWizard.VsWizardEngine.12.0
+
+Param=&quot;WIZARD_NAME = Windows Media Player Plug-in Wizard&quot;
+Param=&quot;ABSOLUTE_PATH = F:\WinSDK 7.0\multimedia\WMP\Wizards\wmpwiz&quot;
+Param=&quot;FALLBACK_LCID = 1033&quot;
+</pre>
+
+<p>I copied 3 files to &quot;C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcprojects&quot;. Afterwards, we are able to create a new plugin project following <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd564577(v=vs.85).aspx" target="_blank" title="MSDN - Using the Plug-in Wizard with Visual Studio">Using the Plug-in Wizard with Visual Studio</a>. Here&#39;s a screenshot that displays Windows Media Player Plugin in New Project dialog box.</p>
+
+<p><img src="01_WMP_Plugin.png" /></p>
+
+<h3><a id="heading0302" name="heading0302">Choosing Plugin Type</a></h3>
+
+<p>There are 4 types of WMP Plugin:</p>
+
+<ul>
+	<li>Visualization Plugin</li>
+	<li>UI Plugin</li>
+	<li>DSP Plugin</li>
+	<li>Rendering Plugin (Deprecated)</li>
+</ul>
+
+<p>UI Plugins are several types</p>
+
+<ul>
+	<li>Display Area Plug-ins (deprecated)</li>
+	<li>Settings Area Plug-ins</li>
+	<li>Metadata Area Plug-ins (deprecated)</li>
+	<li>Separate Window Plug-ins</li>
+	<li>Background Plug-ins</li>
+</ul>
+
+<p>We are going to work on Background Plug-in as our plugin does some operations in the background to set up the caption when a media file is opened. For this reason, when Media Player Plugin Wizard dialog appears we select UI Plugin as displayed on the screen-shot below,</p>
+
+<p><img src="02_UI_plugin.png" /></p>
+
+<p>Afterwards, Visual Studio creates required files and templates for the project that are ready to modify.</p>
+
+<h2><a id="heading04" name="heading04">Code Analysis</a></h2>
+
+<h3><a id="heading0401" name="heading0401">Core Logic</a></h3>
+
+<p>Our Plugin application precisely does following things:</p>
+
+<ul>
+	<li>When a file is opened on Windows Media Player it is an event named wmposMediaOpen. When this event occurs we perform following:</li>
+	<li>Check the extension of opened media file if it can support captions. For example, audio files and some video formats don&#39;t support captions.</li>
+	<li>If caption is supported then we check if sami (.smi) caption file already exists. SAMI caption support is built-in. Hence if such a caption for the media file already exists it is automatically loaded by WMP.</li>
+	<li>When such a supported caption file is not found, in this stage, we look for unsupported caption file such as subrip (.srt). We convert such file when we find one. Currently, this application only supports converting caption files with .srt extension. However, it is easy to update this application to support conversion from other formats as well.</li>
+</ul>
+
+<p>Besides that, I have also tried to optimize code and follow standard procedure to ignore any kind of memory leak as I am using C++.</p>
+
+<h3><a id="heading0402" name="heading0402">Basic Functions and Use of Code</a></h3>
+
+<p>Following functions implement the operations mentioned in &#39;core logic&#39; section:</p>
+
+<p><strong>UpdateMediaFilePath</strong> - gets the path of opened media file.</p>
+
+<p><strong>FileExtNotSupportedByPlugin</strong> - for file extensions not supported this function returns true. Following file extensions are listed not to be supported primarily because they are audio files.</p>
+
+<ol>
+	<li>.m4a</li>
+	<li>.mp3</li>
+	<li>.wma</li>
+	<li>.wav</li>
+	<li>.mp2</li>
+	<li>.ivf</li>
+	<li>.mpa</li>
+	<li>.m3u</li>
+	<li>.wax</li>
+	<li>.cda</li>
+	<li>.mid</li>
+	<li>.midi</li>
+	<li>.rmi</li>
+	<li>.au</li>
+	<li>.aac</li>
+</ol>
+
+<p><strong>CaptionAlreadyAvailable</strong> - this function returns true when SAMI caption file for the media file is found.</p>
+
+<p><strong>EnableCaptionFromSubtitle</strong> - finds existing subtitle in unsupported format, converts it and loads it. -</p>
+
+<p>We add our code inside events cpp file (WMPNativeSubtitleevents.cpp)</p>
+
+<pre lang="C++">case wmposMediaOpen:
+{
+ // Update because file can be reopened
+ UpdateMediaFilePath();
+
+ // if file extension has no support for caption
+  if (FileExtNotSupportedByPlugin(m_sFilePath))
+   break;
+
+ // if (smi or sami exist) do nothing
+ if (CaptionAlreadyAvailable())
+  break;
+ if (EnableCaptionFromSubtitle() == FALSE) {
+  // add more cool stuff
+  break;
+ }
+ break;
+}</pre>
+
+<p>The functions that have been called from this source file are defined in WMPNativeSubtitle.cpp. Let&#39;s mention what we add in that source file and header file. Following declarations are added to header file &quot;WMPNativeSubtitle.h&quot; inside declaration of class CWMPNativeSubtitle:</p>
+
+<pre lang="C++">/////////////////////////////////////////////////////////////////////////////
+// CWMPNativeSubtitle
+class ATL_NO_VTABLE CWMPNativeSubtitle : 
+    public CComObjectRootEx&lt;CComSingleThreadModel&gt;,
+    public CComCoClass&lt;CWMPNativeSubtitle, &amp;CLSID_WMPNativeSubtitle&gt;,
+    public IWMPEvents,
+    public IWMPPluginUI
+{
+public:
+    CWMPNativeSubtitle();
+    ~CWMPNativeSubtitle();
+
+DECLARE_REGISTRY_RESOURCEID(IDR_WMPNativeSubtitle)
+
+DECLARE_PROTECT_FINAL_CONSTRUCT()
+
+BEGIN_COM_MAP(CWMPNativeSubtitle)
+    COM_INTERFACE_ENTRY(IWMPEvents)
+    COM_INTERFACE_ENTRY(IWMPPluginUI)
+END_COM_MAP()
+
+  // ... ...
+  // Added by Me
+private:
+ LPTSTR  m_sFilePath;
+
+ BOOL EnableCaptionFromSubtitle();
+ BOOL CaptionAlreadyAvailable();
+ LPTSTR GetSubtitleFilePath();
+ void UpdateMediaFilePath();
+};</pre>
+
+<p>At the end of same header file we add following declarations:</p>
+
+<pre lang="C++">BOOL FAILMSG(HRESULT hr);
+BOOL FileExists(TCHAR * file);
+BOOL FileExtNotSupportedByPlugin(LPCTSTR sFile);
+BOOL StringEndsWith(LPCTSTR str, LPCTSTR suffix);</pre>
+
+<p>We include header file for conversion from srt to SAMI in cpp file (WMPNativeSubtitle.cpp).</p>
+
+<pre lang="C++">#include &quot;SAMIConversion.h&quot;  </pre>
+
+<p>Afterwards, we add function definitions into the same cpp file:</p>
+
+<pre lang="C++">/////////////////////////////////////////////////////////////////////////////
+// CWMPNativeSubtitle::UpdateMediaFilePath
+// Updates member variable string containing media file path
+void CWMPNativeSubtitle::UpdateMediaFilePath() {
+ // prepare pointer for update
+ if (m_sFilePath)
+  delete m_sFilePath;
+
+ // set mediafilename
+ BSTR sFileName;
+ HRESULT hr = m_spCore-&gt;get_URL(&amp;sFileName);
+ if (FAILMSG(hr))
+  return;
+ // 1 for terminating NULL char
+ const int sfnSize = SysStringLen(sFileName)+1;
+ // will be freed during destruction of object
+ m_sFilePath = new TCHAR[sfnSize];
+ _tcscpy_s(m_sFilePath, sfnSize, sFileName);
+ ::SysFreeString(sFileName);
+}</pre>
+
+<p>The function allocates necessary space and acquires media file path using <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd563238(v=vs.85).aspx" target="_blank" title="msdn - get_URL">get_URL method</a> of COM interface <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd563216(v=vs.85).aspx" target="_blank" title="msdn - IWMPCore">IWMPCore</a>.</p>
+
+<pre lang="C++">
+BOOL FileExtNotSupportedByPlugin(LPCTSTR sFile) {
+ if (StringEndsWith(sFile, TEXT(&quot;.m4a&quot;)) || StringEndsWith(sFile, TEXT(&quot;.mp3&quot;)) || StringEndsWith(sFile, TEXT(&quot;.wma&quot;)) || StringEndsWith(sFile, TEXT(&quot;.wav&quot;)) || \
+  StringEndsWith(sFile, TEXT(&quot;.mp2&quot;)) || StringEndsWith(sFile, TEXT(&quot;.ivf&quot;)) || StringEndsWith(sFile, TEXT(&quot;.mpa&quot;)) || StringEndsWith(sFile, TEXT(&quot;.m3u&quot;)) || \
+  StringEndsWith(sFile, TEXT(&quot;.wax&quot;)) || StringEndsWith(sFile, TEXT(&quot;.cda&quot;)) || StringEndsWith(sFile, TEXT(&quot;.mid&quot;)) || StringEndsWith(sFile, TEXT(&quot;.midi&quot;)) || \
+  StringEndsWith(sFile, TEXT(&quot;.rmi&quot;)) || StringEndsWith(sFile, TEXT(&quot;.au&quot;)) || StringEndsWith(sFile, TEXT(&quot;.aac&quot;)))
+  return TRUE;
+ return FALSE;
+} </pre>
+
+<p>Function FileExtNotSupportedByPlugin returns false encountering any of the mentioned extension.</p>
+
+<pre lang="C++">
+/////////////////////////////////////////////////////////////////////////////
+// CWMPNativeSubtitle::CaptionAlreadyAvailable
+// Check if SAMI caption is already available/loaded
+// if an error occurs returns true, to avoid problems
+// use the IWMPClosedCaption interface to retrieve info
+BOOL CWMPNativeSubtitle::CaptionAlreadyAvailable() {
+    CComPtr&lt;IWMPClosedCaption&gt; spWMPClosedCaption;
+
+ HRESULT hr = E_FAIL;
+
+ hr = m_spCore-&gt;get_closedCaption(&amp;spWMPClosedCaption);
+ if (FAILMSG(hr))
+     return true;
+
+    if (spWMPClosedCaption)
+    {
+  BSTR smiFileName;
+  hr = spWMPClosedCaption-&gt;get_SAMIFileName(&amp;smiFileName);
+  if (FAILMSG(hr))
+   return TRUE;
+
+  if (smiFileName != NULL) {
+   BOOL isNotEmpty = (BOOL) wcscmp(smiFileName, L&quot;&quot;);
+   ::SysFreeString(smiFileName);
+   return isNotEmpty;
+  }
+    }
+ return FALSE;
+}
+</pre>
+
+<p>This function uses <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd563225(v=vs.85).aspx">get_closedCaption method</a> of COM interface <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd563216(v=vs.85).aspx" target="_blank" title="msdn - IWMPCore">IWMPCore</a>. and <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd563122(v=vs.85).aspx" target="_blank" title="msdn - get_SAMIFileName">get_SAMIFileName method</a> of COM interface <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd563113(v=vs.85).aspx">IWMPClosedCaption</a> to check whether a SAMI caption has been loaded.</p>
+
+<pre lang="C++">
+/////////////////////////////////////////////////////////////////////////////
+// CWMPNativeSubtitle::EnableCaptionFromSubtitle
+// Convert caption and load
+// if this procedure is successful it returns true otherwise false
+BOOL CWMPNativeSubtitle::EnableCaptionFromSubtitle() {
+ // subtitles are available for conversion
+ // currently we only support srt format
+ LPTSTR subInputName = GetSubtitleFilePath();
+ if (subInputName == NULL)
+  return FALSE;
+
+ // subInputName will be freed when SubToSAMIConverter object is destroyed
+ SubToSAMIConverter subToSAMIConverter(subInputName);
+ if (subToSAMIConverter.convert_to_sami()) {
+  BSTR mediaFileName;
+  HRESULT hr = m_spCore-&gt;get_URL(&amp;mediaFileName);
+  if (FAILMSG(hr))
+   return FALSE;
+  m_spCore-&gt;close();
+  m_spCore-&gt;put_URL(mediaFileName);
+  ::SysFreeString(mediaFileName);
+  return TRUE;
+ }
+ return FALSE;
+} 
+</pre>
+
+<p>Afterwards, we add function definitions in cpp file (WMPNativeSubtitle.cpp). We get srt subtitle file path in a pointer variable using function GetSubtitleFilePath.</p>
+
+<p>Function GetSubtitleFilePath acquires the media file path and replaces its extension with srt. It also checks whether this final path exists. If file does not exist the function returns NULL.</p>
+
+<p>After getting subtitle file path we pass it to a member function of class SubToSAMIConverter. We discuss about the conversion procedure on next section. This function returns true if conversion procedure is successful. On success we close the media file and reopen to load caption using <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd563243(v=vs.85).aspx" target="_blank" title="msdn - put_URL">put_URL method</a> of IWMPCore interace.</p>
+
+<h2><a id="heading05" name="heading05">SubRip to SAMI Conversion</a></h2>
+
+<h3><a id="heading0501" name="heading0501">Introduction</a></h3>
+
+<p>Function convert_to_sami which is a public member of class SubToSAMIConverter does required conversion from subrip to SAMI. To understand this conversion procedure we need knowledge on following topics:</p>
+
+<ul>
+	<li>SubRip - it is the input format for convert_to_sami</li>
+	<li>SAMI - it is the output format for convert_to_sami</li>
+</ul>
+
+<p>You can visit <a href="http://en.wikipedia.org/wiki/SubRip" target="_blank" title="Wikipedia - SubRip">Wikipedia&#39;s entry on SubRip</a> for detail information. Basically, a subrip text file is a collection of structured caption text such as following:</p>
+
+<ul>
+	<li>A numeric number that increments by one for each caption</li>
+	<li>Time Stamp</li>
+	<li>Text</li>
+</ul>
+
+<p>Additionally, SubRip supports some basic html formatting.</p>
+
+<p>To know about SAMI (Microsoft Synchronized Accessible Media Interchange) format and its specification please go through <a href="http://msdn.microsoft.com/en-us/library/ms971327.aspx" target="_blank" title="msdn - Understanding SAMI 1.0">Understanding SAMI 1.0 on msdn</a> In brief, a SAMI file looks like a html document (though not really html) which contains caption texts inside body tag</p>
+
+<ul>
+	<li>A sync tag mentioning starting time in milliseconds</li>
+	<li>Caption text under a p tag mentioning class and id to apply required formatting</li>
+</ul>
+
+<p>Before body tag formatting style classes and ids are defined for p tag. SAMI captioning has limited html support and it allows captions in multiple languages.</p>
+
+<h3><a id="heading0502" name="heading0502">Conversion - Core Logic</a></h3>
+
+<p>When an object of the class SubToSAMIConverter is created passing the input subtitle file (.srt) path using constructor it creates following files:</p>
+
+<ul>
+	<li>Output SAMI Document(smi text file )</li>
+	<li>Log file (if specified), it helps debugging</li>
+</ul>
+
+<p>Afterwards, convert_to_sami function does follow:</p>
+
+<p>Writes initial style description and header to the smi file which looks like this:</p>
+
+<pre lang="C++">
+&lt;SAMI&gt;
+&lt;head&gt;
+  &lt;STYLE TYPE=&quot;text/css&quot;&gt;
+ &lt;!-- 
+  P {
+   font-size:1.2em;
+   font-family: Arial, Sans-Serif;
+   font-weight: normal;
+   color: #FFFFFF;
+   background-color: transparent;
+   text-align: center; }
+   .SACAPTION { name: English; lang: EN-US; }
+ --&gt;
+  &lt;/STYLE&gt;
+&lt;/head&gt;
+&lt;body&gt;  </pre>
+
+<p>Name of our paragraph tag class for english caption is &#39;SACAPTION&#39;.Then it takes each line from srt file as input and recognizes line type. Line input is taken using following function,</p>
+
+<pre lang="C++">
+BOOL SubToSAMIConverter::get_sub_line(LPTSTR *lineStr, int *length);   </pre>
+
+<p>and line type is determined by following function,</p>
+
+<pre lang="C++">
+LINETYPE get_line_type(LPTSTR line, SubToSAMIConverter* pSamiConverter); </pre>
+
+<p>Following types of lines are considered in an srt file:</p>
+
+<ul>
+	<li><strong>New line</strong> - when a newline is encountered first we verify whether we got this newline after caption in that case w he n e</li>
+	<li><strong>Number Counter</strong> - is named seqeuence in the program; nothing is written to output smi file when it is encountered. However, in future, we can do a checking whether number counter is correct and may write a warning to the log file when such event occurs.</li>
+	<li><strong>TimeStamp</strong> - two timestamps are found in these lines in srt file considering standard is followed. Hence, we save starting and ending time and perform necessary logging.</li>
+	<li><strong>Caption Text</strong> - when texts are found I do some checking such as whether timestamps and string pointer are valid. If everything is okay, program does following for each of the two timestamps.
+	<ul>
+		<li>for starting time stamp, text is printed with sync time, see following example,
+		<pre lang="C++">
+ &lt;SYNC Start=&quot;8705&quot;&gt;
+ &lt;p class=&quot;SACAPTION&quot;&gt;
+  I&#39;m so lonely, broken angel
+ &lt;/p&gt;
+ &lt;/SYNC&gt;   </pre>
+		</li>
+		<li>for ending time stamp, a white space is written to file with sync time. Following example illustrates this:
+		<pre lang="C++">
+ &lt;SYNC Start=&quot;12178&quot;&gt;
+ &lt;p class=&quot;SACAPTION&quot;&gt;
+  &amp;nbsp;
+ &lt;/p&gt;
+ &lt;/SYNC&gt;</pre>
+		</li>
+	</ul>
+	</li>
+	<li>The reason behind this is that, Windows Media Player keeps displaying the same caption till next sync time is found. This can be irritating. Imagine: a short sentence from the speaker in the video, then other events can occur and next sentence might be uttered in a long time.</li>
+	<li>Default - any garbage: is considered as an error and should return failure. This is strict. Usually, this case is not satisfied.</li>
+</ul>
+
+<h3><a id="heading0503" name="heading0503">Handling Text Encoding During File I/O</a></h3>
+
+<p>While reading from subtitle text files it should be considered that input text file can be encoded in following formats:</p>
+
+<ul>
+	<li>ANSI Text File</li>
+	<li>UTF-8 Text with BOM</li>
+	<li>UTF-8 Text without BOM</li>
+	<li>UTF-16 Text File (BOM is default)</li>
+	<li>UTF-32 Text File (BOM is default)</li>
+</ul>
+
+<h3><a id="heading0504" name="heading0504">Where are encoding stuffs happening?</a></h3>
+
+<p>There are two functions where encoding is being taken cared of:</p>
+
+<ul>
+	<li>function <strong><em>read_data_into_buffer</em> </strong> which is used/called by <strong><em>get_sub_line</em></strong> - reads BYTEs from file and converts them to Unicode buffers</li>
+	<li><strong><em>writeSmiText</em></strong> and <strong><em>writeLog</em></strong> - writes texts by encoding them into utf-8.</li>
+</ul>
+
+<p>get_sub_line function is giving us a string pointer to the line read from file and length of the line in an integer pointer variable using read_data_into_buffer read_data_into_buffer reads 1024 bytes from specified file using win32 <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467(v=vs.85).aspx" target="_blank" title="msdn - ReadFile">ReadFile</a> function (file handles for ReadFile and WriteFile were created in constructor of the class). W e</p>
+
+<p>All text encoding related functions are defined in encoding.cpp and declared in encoding.h</p>
+
+<pre lang="C++">
+enum TEXT_ENCODE_FORMAT { ANSI_TEXT, UTF8_TEXT_WITHOUT_BOM, UTF8_TEXT_WITH_BOM, UTF16_TEXT, UTF32_TEXT, UNKNOWN_TEXT_TYPE };
+
+LPTSTR ConvertUTF8ToUTF16( __in LPCSTR pszTextUTF8 );
+LPTSTR ConvertANSIToUTF16( __in LPCSTR pszTextANSI );
+LPSTR ConvertUTF16ToUTF8( __in LPCWSTR pszTextUTF16 );
+BOOL is_utf8_encoded(__in const unsigned char* inStr);
+TEXT_ENCODE_FORMAT get_text_file_encoding(__in const unsigned char* inStr); 
+</pre>
+
+<p>Primarily function get_text_file_encoding is giving us type of encoding used by the input text file. Here&#39;s how code of this function looks like:</p>
+
+<pre lang="C++">
+TEXT_ENCODE_FORMAT get_text_file_encoding(__in const unsigned char* inStr) {
+ // UTF-32 detection
+ // BOM is 00 00 FE FF (for BE) or FF FE 00 00 (for LE).
+ BYTE firstByte = inStr[0];
+ BYTE secondByte = inStr[1];
+ BYTE thirdByte = inStr[2];
+ // msdn Using Byte Order Marks ref: &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/windows/desktop/dd374101(v=vs.85).aspx&quot;&gt;http://msdn.microsoft.com/en-us/library/windows/desktop/dd374101(v=vs.85).aspx
+
+ // Windows is LE
+ // big endian and little endian
+ if ((firstByte == 0x00 &amp;&amp; secondByte == 0x00 &amp;&amp; thirdByte == 0xFE &amp;&amp; inStr[3] == 0xFF) || (firstByte == 0xFF &amp;&amp; secondByte == 0xFE &amp;&amp; thirdByte == 0x00 &amp;&amp; inStr[3] == 0x00))
+  return UTF32_TEXT;
+ // BOM is FE FF (for BE) or FF FE (for LE). Note that the UTF-16LE BOM is found at the start of the UTF-32LE BOM, so check UTF-32 first.
+ // There may be UTF-16 files without a BOM, but it would be really hard to detect them. The only reliable way to recognize UTF-16 without a BOM is to look for surrogate pairs (D[8-B]xx D[C-F]xx), but non-BMP characters are too rarely-used to make this approach practical.
+ if ((firstByte == 0xFE &amp;&amp; secondByte == 0xFF) || (firstByte == 0xFF &amp;&amp; secondByte == 0xFE))
+  return UTF16_TEXT;
+ // The UTF-8 representation of the BOM is the byte sequence 0xEF,0xBB,0xBF
+ // for windows notepad; double check of is_utf8_encoded, just in case
+ if ((firstByte == 0xEF &amp;&amp; secondByte == 0xBB &amp;&amp; thirdByte == 0xBF) &amp;&amp; is_utf8_encoded(&amp;inStr[3]))
+  return UTF8_TEXT_WITH_BOM;
+
+ if (is_ANSI_encoded(inStr) == FALSE)
+  return UTF8_TEXT_WITHOUT_BOM;
+
+ return ANSI_TEXT;
+}  </pre>
+
+<p>Input to this function, inStr is usually first 1024 bytes of data from the file.</p>
+
+<h3><a id="heading06" name="heading06">Plugin Properties/Configuration Dialog Box</a></h3>
+
+<p><img src="Plugin_Properties.png" /></p>
+
+<p>There are several issues to deal with while including a plugin configuration/property dialog box</p>
+
+<ul>
+	<li>Keeping up to date state in the plugin class</li>
+	<li>Persistently storing the settings applied by user</li>
+	<li>Properly updating the dialog for display with up to date settings</li>
+</ul>
+
+<p>Our plugin property dialog is pretty sample and to demonstrate all the issues to deal successfully.</p>
+
+<h4><a id="heading0601" name="heading0601">How is it implemented?</a></h4>
+
+<p>We maintain a single property. It is used to know whether logging should be enabled or not. At first we declare a variable as private member of class CWMPNativeSubtitle inside WMPNativeSubtitle.h</p>
+
+<pre lang="C++">
+BOOL m_bLogSetting; </pre>
+
+<p>This variable is used to keep up to date information about log setting. By default it is disabled and plugin will not create a log file along side creating an SMI file. Have a look at constructor,</p>
+
+<pre lang="C++">
+CWMPNativeSubtitle::CWMPNativeSubtitle():
+  m_sFilePath(NULL),
+  m_bLogSetting(FALSE)
+{ ... } </pre>
+
+<p>For example, user has enabled logging using Properties Dialog Box of the plugin. In that case, it is read from Windows Registry in same constructor,</p>
+
+<pre lang="C++">
+// read m_bLogSetting from registry
+CRegKey key;
+LONG    lResult;
+
+// also consider whether this location kwszPrefsRegKey is readable/writeable
+lResult = key.Open(HKEY_CURRENT_USER, kwszPrefsRegKey, KEY_READ);
+if (ERROR_SUCCESS == lResult)
+{
+ DWORD   dwValue = 0;
+ DWORD dwType = 0;
+ ULONG uLength = sizeof(dwValue);
+ lResult = key.QueryValue(kwszPrefsLogging, &amp;dwType, &amp;dwValue, &amp;uLength);
+
+ if (ERROR_SUCCESS == lResult)
+ {
+  m_bLogSetting = (BOOL) (dwValue &amp; 0x0001);
+ }
+} 
+</pre>
+
+<p>As you can see for the first time plugin is enabled it will not be able read it from registry as relevant registry keys have not been created yet. In that case, Key Open procedure will fail and variable m_bLogSetting&#39;s disabled state will not be changed. Registry Key Path and Name is declared in header file (WMPNativeSubtitle.h)</p>
+
+<pre lang="C++">
+// registry location for preferences, not sure whether this is the best location to store plugin properties
+const WCHAR kwszPrefsRegKey[] = L&quot;Software\\Microsoft\\MediaPlayer\\UIPlugins\\{52738E25-987F-4CA8-A674-5154267BF422}\\WmpNativeSubtitle&quot;;
+const WCHAR kwszPrefsLogging[] = L&quot;LogSettings&quot;; </pre>
+
+<p>This information needs to be propagated to the dialog class so that when user clicks they can see it in updated state. It is why OnInitDialog function of the dialog class retrieves it and updates check button,</p>
+
+<pre lang="C++">
+if (m_pPlugin) {
+ m_pPlugin-&gt;get_log_status(&amp;bLogStatus);
+ if (bLogStatus)
+  SendDlgItemMessage(IDC_CHECK_LOG, BM_SETCHECK, BST_CHECKED, (int) bLogStatus);
+ else
+  SendDlgItemMessage(IDC_CHECK_LOG, BM_SETCHECK, BST_UNCHECKED, (int) bLogStatus);
+}</pre>
+
+<p>There are two method implemented inside class CWMPNativeSubtitle to retrieve and update log status from other classes,</p>
+
+<pre lang="C++">
+/////////////////////////////////////////////////////////////////////////////
+// CWMPNativeSubtitle::get_log_status
+//
+// Property get to retrieve log status via the public interface.
+/////////////////////////////////////////////////////////////////////////////
+STDMETHODIMP CWMPNativeSubtitle::get_log_status(BOOL *pVal)
+{
+ if (NULL == pVal)
+ {
+  return E_POINTER;
+ }
+ *pVal = m_bLogSetting;
+ return S_OK;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CWMPNativeSubtitle::set_log_status
+//
+// Property put to store the scale value via the public interface.
+/////////////////////////////////////////////////////////////////////////////
+STDMETHODIMP CWMPNativeSubtitle::set_log_status(BOOL newVal)
+{
+ m_bLogSetting = newVal;
+ return S_OK;
+}  </pre>
+
+<p>When user enables/disables logging from dialog box it is updated both in registry and CWMPNativeSubtitle class member,</p>
+
+<pre lang="C++">
+LRESULT OnOK(WORD wNotifyCode, WORD wID, HWND hwndCtl, BOOL&amp; fHandled)
+{
+ int logStatus = 0;
+ UINT32 state = IsDlgButtonChecked(IDC_CHECK_LOG);
+
+ if (state == BST_CHECKED)
+ {
+  logStatus = 1;
+ }
+ else
+ {
+  logStatus = 0;
+ }
+ // update registry
+ CRegKey key;
+ LONG    lResult;
+
+ lResult = key.Create(HKEY_CURRENT_USER, kwszPrefsRegKey);
+ if (ERROR_SUCCESS == lResult)
+ {
+  DWORD dwValue = (DWORD) logStatus;
+  lResult = key.SetValue(kwszPrefsLogging, REG_DWORD, &amp;dwValue, sizeof(dwValue));
+ }
+
+ // update plug-in class member
+ if (m_pPlugin)
+ {
+  m_pPlugin-&gt;set_log_status(logStatus);
+ }
+
+ EndDialog( IDOK );
+ return 0;
+} 
+</pre>
+
+<p>Still, there is scope of improvement, such as, to:</p>
+
+<ul>
+	<li>Ensure registry write is done only when value has changed.</li>
+	<li>Eliminate unnecessary registry read when class member is already updated.</li>
+</ul>
+
+<p>This can be important when you have a number of property members in the class.</p>
+
+<h3><a id="heading07" name="heading07">How does the Plugin Support Other Languages and Unicode?</a></h3>
+
+<p>Our output SAMI files are encoded in utf-8. Hence, it can be speculated that writing Unicode characters for languages other than English should work and that Windows Media Player should by default be able to display them properly. However, this is only a speculation.</p>
+
+<p>Please have a look at following caption record in an smi file,</p>
+
+<pre lang="C++">
+&lt;SYNC Start=&quot;272000&quot;&gt;
+&lt;p class=&quot;SACAPTION&quot;&gt;
+ Long, long live the walls we crashed through&lt;br&gt;
+ زنده.زنده باد دیوارهایی که در هم شکستیم
+&lt;/p&gt; </pre>
+
+<p>When we load it with the relevant media file the rendering of caption looks like the one in screenshot,</p>
+
+<p><img src="Unicode_Subtitle_without_html_encode.png" /></p>
+
+<p>Reason can be one of the two. One is that Windows Media Player does not really support utf-8. It only parses ANSI. In that case, when you split a 2 byte Unicode character into two you get two ANSI characters. Media Player is displaying those separated ANSI characters. Other reason can be that, probably we have missed something in documentation, merely putting Unicode chars is not probably the option. Probably, an expert in the field can shed light on it.</p>
+
+<p>SAMI document has limited html support. If Unicode characters are encoded in html format Windows Media Player displays them correctly. Have a look at following caption record in the smi file,</p>
+
+<pre lang="C++">
+&lt;SYNC Start=&quot;272000&quot;&gt;
+&lt;p class=&quot;SACAPTION&quot;&gt;
+ Long, long live the walls we crashed through&lt;br&gt;
+ &amp;#1586;&amp;#1606;&amp;#1583;&amp;#1607;.&amp;#1586;&amp;#1606;&amp;#1583;&amp;#1607; &amp;#1576;&amp;#1575;&amp;#1583; &amp;#1583;&amp;#1740;&amp;#1608;&amp;#1575;&amp;#1585;&amp;#1607;&amp;#1575;&amp;#1740;&amp;#1740; &amp;#1705;&amp;#1607; &amp;#1583;&amp;#1585; &amp;#1607;&amp;#1605; &amp;#1588;&amp;#1705;&amp;#1587;&amp;#1578;&amp;#1740;&amp;#1605;
+&lt;/p&gt;
+&lt;/SYNC&gt;</pre>
+
+<p>Here&#39;s the screenshot when this smi is loaded with relevant media file,</p>
+
+<p><img src="Wmp_Unicode_caption.png" /></p>
+
+<p>1586, 1606, 1586 etc are the decimal Unicode value for the respective Arabic letter. Let&#39;s have a peek into the implementation in source file (SAMIConversion.cpp),</p>
+
+<pre lang="C++">
+/////////////////////////////////////////////////////////////////////////////
+// CWMPNativeSubtitle::EmbedUnicodeSymbols
+// Take Unicode string to write into UTF-8 file
+// if Unicode char is found encode in html, otherwise append as direct ansi char
+void SubToSAMIConverter::EmbedUnicodeSymbols(LPWSTR pSubStr, LPWSTR pLine) {
+ size_t pSubLen = wcslen(pSubStr);
+ for (int i = 0; pLine[i] != _T(&#39;\0&#39;); i++) {
+  if ((unsigned int)pLine[i] &lt;= 0xFF) {
+   pSubStr[pSubLen++] = pLine[i];
+  }
+  else {
+   pSubStr[pSubLen++] = L&#39;&amp;&#39;;
+   pSubStr[pSubLen++] = L&#39;#&#39;;
+
+   WCHAR numbuf[12];
+   _itow_s((int)pLine[i], numbuf, 10, 10);
+   for (int j = 0; numbuf[j] != L&#39;\0&#39;; j++)
+    pSubStr[pSubLen++] = numbuf[j];
+   pSubStr[pSubLen++] = L&#39;;&#39;;
+  }
+ }
+ pSubStr[pSubLen] = L&#39;\0&#39;;
+}
+</pre>
+
+<p>To optimize the plugin, we only call EmbedUnicodeSymbols function only when Unicode character has been encountered before. First string pointer in the parameters of the function is the one that we write to smi file later and second parameter string pointer is the one we found originally in subrip file and converted to Unicode string. So what it basically does, is that, the function,</p>
+
+<ul>
+	<li>Iterates till null terminating character of pLine is encountered</li>
+	<li>For each of the characters in pLine string it checks whether it is in ansi char range (ASCII code 0 to 255)</li>
+	<li>If the character is in range it is appended to the first string.</li>
+	<li>Otherwise, it appends &#39;&amp;#&#39; Then appends decimal number found by converting the Unicode value of the character and finally appends a &#39;;&#39;</li>
+</ul>
+
+<h3><a id="heading08" name="heading08">Features yet to implement</a></h3>
+
+<p>Here is a tentative list of features to implement,</p>
+
+<ul>
+	<li>Currently smi file is created in the same location of media file. If the directory is not writeable Plugin won&#39; be able display caption. Solution is to change smi file location to a temporary directory which will always be writeable. This feature has been implemented and has been discussed on next part of the article.</li>
+	<li>Add option in properties dialog box to change font, color and other style of subtitle/caption (currently we are doing this by modifying registry manually)</li>
+	<li>Add option in properties dialog box to change caption height (currently we have to modify registry manually to achieve this)</li>
+	<li>Create Installer and release both 64 bit and 32 bit</li>
+</ul>
+
+<h2><a id="heading09" name="heading09">Source and Builds</a></h2>
+
+<h4><a id="heading0901" name="heading0901">Acquiring Source</a></h4>
+
+<p>There are two ways to get the source code of the project.</p>
+
+<ul>
+	<li>Using the download link from the top of the article page - after downloading extract the zip archive</li>
+	<li><strong>Using code.google.com:</strong> Project is located at <a href="http://code.google.com/p/wmp-native-subtitle-plugin/">http://code.google.com/p/wmp-native-subtitle-plugin/</a>. For updated source code you can checkout source following instructions at: <a href="http://code.google.com/p/wmp-native-subtitle-plugin/source/checkout">http://code.google.com/p/wmp-native-subtitle-plugin/source/checkout</a></li>
+</ul>
+
+<h4><a id="heading0902" name="heading0902">64 bit builds</a></h4>
+
+<p><a id="heading0902" name="heading0902"> </a></p>
+
+<p><a id="heading0902" name="heading0902">If you wish to use 64 bit plugin please set 64 bit Windows Media Player as default. You can find instructions on </a><a href="http://answers.microsoft.com/en-us/windows/forum/pictures/how-can-i-set-windows-media-player-64-bits-version/982a3d0b-16cd-47c8-b579-101166acb514">Microsoft Answers page</a> on how to set 64 bit Windows Media Player as default. If you have downloaded source using attached zip please use the zip archive mentioning x64. Open the solution file with Visual Studio. After building the project we get an output dll file. <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd564577(v=vs.85).aspx">msdn documentation</a> suggests running plugin project using Visual Studio with administrator privilege. UI Plugin Project generates a dll file which has to be registered into the system using regsvr32 command that requires admin privilege. However, I built the project as regular user. Later, I applied the command manually using a command prompt with admin privilege. Note, you have to provide correct path of the dll file in the command,</p>
+
+<pre lang="C++">
+regsvr32 &quot;F:\Sourcecodes\Plugin-App\WMPNativeSubtitle\x64\Release\WMPNativeSubtitle_plugin_x64.dll&quot;     </pre>
+
+<p>When it is successful a dialog box confirms it.</p>
+
+<p><img src="dll_register.png" /></p>
+
+<p>After that you have to ensure whether local caption is enabled in Windows Media Player. Please refer to section: <strong>Enabling Caption/Subtitle</strong> and follow all of the step to enable the plugin finally.</p>
+
+<h4><a id="heading0903" name="heading0903">32 bit builds</a></h4>
+
+<p>Instructions for 32 builds are almost same as for 64 bit builds. Except, if you download source attached zip you must download the one mentioning x86. Note, if you acquire the source using code.google.com&#39;s project page you will find that there are two directories containing Visual Studio Project configuration files: one name x64 and other one is x86. x86 directory contains Visual Studio solution and project files for 32 bit. Copy this files and overwrite files in x64 which give you required files for 32 bit build.</p>
+
+<p>After building dll from the code use regsvr32 command to register the dll. regsvr32 works for 32 bit dlls as well. Hence, registering the dll will be an easy work of apply a command with privilege elevated.</p>
+
+<h2><a id="heading10" name="heading10">Enabling Caption/Subtitle</a></h2>
+
+<p>By default local captions are not enabled in Windows Media Player.</p>
+
+<h5>Step 1 - Turn Local Captions On</h5>
+
+<p>To enable captions to be shown from local source, you have to go to options,</p>
+
+<p><img src="WMP_options.png" /></p>
+
+<p>Then navigate to &quot;Security&quot; tab and tick the check box saying &quot;Show local captions when present&quot; as displayed in screenshot below,</p>
+
+<p><img src="Enable_local_caption.png" /></p>
+
+<p>And click ok to save settings.</p>
+
+<h5>Step 2 - Enable English Caption</h5>
+
+<p>This step to enable default English caption, lyrics, subtitle is also important. Without enabling it captions won&#39;t be displayed.</p>
+
+<p><img src="Turn_caption_on_crop.png" /></p>
+
+<p>At this stage subtitle/caption will be displayed if smi file is available with same name as of video file name. However, to enable captions for subrip (.srt) files we have to proceed to next step.</p>
+
+<h5>Step 3 - Enable WmpNativeSubtitle Plugin</h5>
+
+<p>Our final step is to enable the plugin. To do that, we have to navigate to Plug-Ins tab from More options. And then select &quot;Background&quot; from Category. Then, we must enable the plugin by checking the tick box on the left of the Plugin Name.</p>
+
+<p><img src="Enable_Background_plugin.png" /></p>
+
+<p>At this stage, With all these steps properfly followed Windows Media Player is now capable of displaying Captions for both .srt and .smi files.</p>
+
+<h2><a id="heading11" name="heading11">Installing Plugin without building from Code</a></h2>
+
+<p>Please download proper release dll zip archive (x64 for 64 bit plugin and x86 for 32 bit plugin). A 64 Windows OS (except probably Server 2012) can run both 32 bit and 64 bit application. If you want to use the 64 bit plugin you must set Windows Media Player default following instruction from <a href="http://answers.microsoft.com/en-us/windows/forum/windows_7-windows_programs/making-windows-media-player-64-bit-default/bd4872b3-75e8-4d81-ae8a-df50798d5113">http://answers.microsoft.com/en-us/windows/forum/windows_7-windows_programs/making-windows-media-player-64-bit-default/bd4872b3-75e8-4d81-ae8a-df50798d5113</a></p>
+
+<p>After downloading extract the zip archive. There are two dll files inside the extracted directory:</p>
+
+<ul>
+	<li>WMPNativeSubtitle_plugin.dll or WMPNativeSubtitle_plugin_x64.dll</li>
+	<li>msvcr120.dll</li>
+</ul>
+
+<p>For example, if directory path is: <strong><em>F:\Plugin</em></strong> then following command will install/register the 64 bit dll into system (requires elevated/admin command prompt):</p>
+
+<pre lang="C++">
+regsvr32 &quot;F:\Plugin\WMPNativeSubtitle_plugin_x64.dll&quot;      </pre>
+
+<p>To install the 32 bit plugin, modify the file name to exclude &quot;_x64&quot;,</p>
+
+<pre lang="C++">
+regsvr32 &quot;F:\Plugin\WMPNativeSubtitle_plugin.dll&quot;       </pre>
+
+<p>Finally, you must follow instructions from section <a href="#heading10">Enabling Caption/Subtitle</a> to enable caption.</p>
+
+<h3><a id="heading12" name="heading12">Tips and Tricks</a></h3>
+
+<h4>How to change caption height</h4>
+
+<p>Windows Media Players caption rendering system, you may note, is bit different. There is a darker background around caption text though transparency is enabled. Default caption height seems to be large. However, it is easy to change it. If you navigate to following registry path,</p>
+
+<pre lang="C++">
+[HKEY_CURRENT_USER\Software\Microsoft\MediaPlayer\Player\Tasks\NowPlaying]
+&quot;CaptionsHeight&quot;=dword:00000064  </pre>
+
+<p>There is a key named CaptionsHeight under it. 0x64 is large. I use hexadecimal value 0x48, which is comfortable for me.</p>
+
+<h3><a id="heading13" name="heading13">Conclusion</a></h3>
+
+<p>While there are plenty of audio/video player projects around there is appeal of Windows Media Player to some people. It&#39;s clean and simple; coming with the OS this software is still classic favorite to many. While Windows Media Player supports many of the latest video file formats and encoding it provides better hardware acceleration and clarity having advantage of the support from the OS. I hope this article will be useful to fans of Windows Media Player.</p>
+
+<h2>Points of Interest</h2>
+
+<p>Any kind of suggestion, review to improve this article are welcome. While developing the plugin to make an optimal solution and to implement some components from scratch you might notice I have reinvented some of the wheels (whether this has been better or worse, experts can tell).</p>
+
+<p>Side-note: I created this application almost 8 months ago. I am sorry that I am late to reproduce it here. Sharing is caring. There are other sides to the original app but they should be in different topic, in different article.</p>
+
+<p>I should also mention that while typing this into code-project editor I found a few irritating bugs of the editor such as unnecessary white space coming automatically at end of lines and crash of web-page on Internet Explorer 11 while copy pasting some elements in editor (later, when I reopened the article editor I found almost 700 lines of same content!). Had the technical team have looked into it could make our future experience better.</p>
+
+<p>Thanks everyone.</p>
+
+<h2>History</h2>
+
+<p>October 2013 - <strong>Plug-In developed</strong></p>
+
+<p>May 8, 2014 - article, first revision</p>
+
+<p>June 16, 2014 - article, second revision</p>
+
+<p>June 21, 2014 - article, third revision</p>
