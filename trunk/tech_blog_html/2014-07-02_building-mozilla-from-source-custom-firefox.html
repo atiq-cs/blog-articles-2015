@@ -1,0 +1,458 @@
+<p><strong>This article covers following topics:</strong></p>
+<ul><li>Installing prerequisites to prepare for build</li>
+<li>How Mozilla is built from source on Windows</li>
+<li>How to create setup installer</li>
+<li>Building Custom Firefox</li>
+<li>Debugging Firefox</li></ul>
+
+<h3>Preparing for Mozilla Build</h3>
+<h4>Our System Profile</h4>
+<p>The PC we are trying this build has following software configuration:</p>
+<ul><li><a href="http://windows.microsoft.com/en-us/windows-8/meet">Windows 8.1</a> (64 bit) (updated via Windows Update)</li>
+<li><a href="http://www.microsoft.com/en-us/download/details.aspx?id=40778">Visual Studio Ultimate 2013</a></li></ul>
+
+<h4>Prerequisites</h4>
+<ul><li><strong>Windows SDK</strong>: As we have Visual Studio 2013 already installed in our system it includes Windows 8 SDK as well. If you are using older version of Visual Studio please install <a href="http://msdn.microsoft.com/en-us/windows/bg162891.aspx">Windows SDK</a> along with it.</li>
+<li><strong>DirectX SDK</strong>: If you want to build mozilla with graphics hardware acceleration you need to install DirectX SDK as well. Please visit this page <a href="http://www.microsoft.com/en-us/download/details.aspx?id=6812">Microsoft - DirectX Software Development Kit </a> to install it While installing DirectX SDK you might get following error dialog box,</li>
+<p id="image"><a href="http://1.bp.blogspot.com/-76J-oCuWhp4/U7P7Zxa1GrI/AAAAAAAABlI/Ml_suFJf8vI/s1600/error_dlg.png" title="Click image to zoom - DirectX SDK Installation Error"><img src="http://1.bp.blogspot.com/-76J-oCuWhp4/U7P7Zxa1GrI/AAAAAAAABlI/Ml_suFJf8vI/s1600/error_dlg.png" /></a></p>
+<p>To solve this problem we have to un-install Visaul C++ 2010 redistributable x86 and redistributable x64 if they are installed previously in the System.</p>
+<p id="image"><a href="http://3.bp.blogspot.com/-oavu-RMN6B4/U7P7Z4osQ5I/AAAAAAAABlA/6HL4VsmDKmI/s1600/appwiz.png" title="Click image to zoom - Removing VC++ Redistributable as a Solution"><img src="http://3.bp.blogspot.com/-oavu-RMN6B4/U7P7Z4osQ5I/AAAAAAAABlA/6HL4VsmDKmI/s1600/appwiz.png" /></a></p>
+
+<li><strong>Mozilla Build Setup</strong>: In this stage, we have to install <a href="https://ftp.mozilla.org/pub/mozilla.org/mozilla/libraries/win32/MozillaBuildSetup-Latest.exe">Mozilla Build Setup Executable</a> (size around 86 MB as of today) It installs mingw32 tools which includes bash, mercurial etc that are required to build Mozilla Firefox. When this executable is run it asks for following confirmation,</li></ul>
+<p id="image"><a href="http://3.bp.blogspot.com/-_wDFoNWtErc/U7QAruft_kI/AAAAAAAABls/gm-FDNzyDuQ/s1600/Build_Setup.png" title="Click image to zoom - Removing VC++ Redistributable as a Solution"><img src="http://3.bp.blogspot.com/-_wDFoNWtErc/U7QAruft_kI/AAAAAAAABls/gm-FDNzyDuQ/s1600/Build_Setup.png" /></a></p>
+<p>Click agree and continue the installation. The installer does not modify the system except probably it creates a directory in C:\Users\UserName\.mozbuild and probably modifies the system path variable (has to be checked).</p>
+
+<h3>Acquiring Source</h3>
+<p>Let's start mingw32 bash tool by clicking one of the <strong>start-shell-msvcXXXX.bat</strong> files.</p>
+<p id="image"><a href="http://4.bp.blogspot.com/-9OZvMFfEduU/U7P7Yncw6aI/AAAAAAAABk4/Ovjoqm0zlrQ/s1600/MozBuild-Files.png" title="Click image to zoom - Mozilla Build Mingw32 prompt batch files"><img src="http://4.bp.blogspot.com/-9OZvMFfEduU/U7P7Yncw6aI/AAAAAAAABk4/Ovjoqm0zlrQ/s320/MozBuild-Files.png" /></a></p>
+<p>Since our system has VS 2023. We start <strong>start-shell-msvc2013.bat</strong>. The prompt looks like this after I applied 'bash --version' command,</p>
+
+<pre class="brush: plain; first-line: 1; tab-size: 5; toolbar: false;">"Mozilla tools directory: H:\mozilla-build\"
+Visual C++ 11 directory: C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\
+Visual C++ 12 directory: C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\
+Windows SDK directory: C:\Program Files (x86)\Windows Kits\8.1\
+Windows SDK version: 8.1
+Using VC 2013 built-in SDK
+Mozilla build environment: MSVC version 12.
+
+$ bash --version
+GNU bash, version 3.1.0(1)-release (i686-pc-msy
+Copyright (C) 2005 Free Software Foundation, Inc.
+
+SA@WorkStation ~
+$ </pre>
+<p>Let's create a new source directory and change directory to there,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">SA@WorkStation ~
+$ cd ../
+$ mkdir mozilla-source
+$ cd mozilla-source</pre>
+
+<p>There are several ways we can acquire source code of mozilla now. One is to use <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Source_Code/Mercurial/Bundles">Mercurial(hg) bundles</a>. Source-code bundle can be acquired by downloading this file: <a href="http://ftp.mozilla.org/pub/mozilla.org/firefox/bundles/mozilla-central.hg">mozilla-central - firefox bundle</a>. When download (size: around 870 MB) is complete please follow instructions from here: <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Source_Code/Mercurial/Bundles">Mozilla - Mercurial(hg) bundles</a> to unbundle and continue with the source.</p>
+
+<p>Another option to acquire source is to use an <strong>hg clone</strong> command. Even if network speed is good we should not try hg clone. It takes lots of time probably because mozilla’s repo is very slow. But if you are confident and want to try then apply this command on the opened mingw32 bash prompt,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ hg clone https://hg.mozilla.org/mozilla-central</pre>
+
+<h4>Mercurial</h4>
+<p>Mozilla uses Mercurial as their distributed version control system. It is useful if you have some knowledge on mercurial commands mostly on how to checkout, checking diff, creating source from bundle, and how to udpate etc.</p>
+<p>However, you do not need to install Mercurial externally as it is already included by Mozilla build setup. Following basic commands might be worth knowing,</p>
+
+<p>To perform update on the source</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ hg pull -u
+pulling from https://hg.mozilla.org/mozilla-central/
+searching for changes
+adding changesets
+adding manifests
+adding file changes
+added 7788 changesets with 43214 changes to 14593 files
+merging browser/installer/package-manifest.in
+13914 files updated, 1 files merged, 1455 files removed, 0 files unresolve</pre>
+
+<p>To drop changes made to source</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ hg revert</pre>
+
+<p>To perform clean up of unnecessary files</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ hg purge</pre>
+
+<p>It seems to delete some necessary files some times.</p>
+
+<p>If you'd like to work on mozilla-release, you can go ahead,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ hg clone http://hg.mozilla.org/releases/mozilla-release release-src
+$ cd release-src</pre>
+
+<h3>Building Mozilla Firefox</h3>
+<p>Create .mozconfig with contents (<a href="https://developer.mozilla.org/en-US/docs/Windows_8">ref</a>) showed in output in the directory where mozilla-central source resides,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ cd ../mozilla-source/
+$ cat .mozconfig
+# This specifies the directory where
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-ff
+# Uncomment the following line if you want to build with debugging code enabled:
+#ac_add_options --enable-debug</pre>
+
+<p>If everything is done right we we get a successful build,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">SA@WorkStation /h/mozilla-source/mozilla-central
+$ ./mach build
+ 0:00.28 H:/mozilla-build/msys/bin/sh.exe -c h:/mozilla-build/mozmake/mozmake.EXE -f client.mk -s
+ 0:01.03 client.mk:207: h:/mozilla-source/mozilla-central/obj-ff/.mozconfig.mk: No such file or directory
+ 0:01.22 Clobber not needed.
+ 0:02.87 Adding client.mk options from h:/mozilla-source/mozilla-central/.mozconfig:
+ 0:02.87     MOZ_OBJDIR=$(TOPSRCDIR)/obj-ff
+ 0:02.87     FOUND_MOZCONFIG := h:/mozilla-source/mozilla-central/.mozconfig
+ 0:03.09 Generating h:/mozilla-source/mozilla-central/configure using autoconf
+ 0:04.50 Generating h:/mozilla-source/mozilla-central/js/src/configure using autoconf
+ 0:05.70 cd h:/mozilla-source/mozilla-central/obj-ff
+ 0:05.72 h:/mozilla-source/mozilla-central/configure
+ 0:06.09 creating cache ./config.cache
+ 0:07.31 checking host system type... i686-pc-mingw32
+ 0:07.65 checking target system type... i686-pc-mingw32
+ 0:08.01 checking build system type... i686-pc-mingw32
+ 0:08.03 checking for mawk... no
+ 0:08.04 checking for gawk... gawk
+ 0:08.11 checking for python2.7... /h/mozilla-build/python/python2.7
+ 0:08.17 Creating Python environment
+ 0:10.97 New python executable in h:/mozilla-source/mozilla-central/obj-ff/_virtualenv\Scripts\python2.7.exe
+ 0:10.97 Also creating executable in h:/mozilla-source/mozilla-central/obj-ff/_virtualenv\Scripts\python.exe
+ 0:18.88 Installing setuptools, pip...done.
+ 0:19.74 running build_ext
+ 0:19.74
+ 0:19.74 copying build\lib.win32-2.7\_psutil_mswindows.pyd ->
+ 0:19.75
+ 0:19.75 error: could not delete '_psutil_mswindows.pyd': Access is denied
+ 0:19.75
+ 0:19.75
+ 0:19.75 Error processing command. Ignoring because optional. (optional:setup.py:python/psutil:build_ext:--inplace)
+ 0:19.75 h:/mozilla-source/mozilla-central/python/mozbuild/mozbuild/virtualenv.py:318: UserWarning: Hacking environment to allow binary Python extensions to build. Y
+ou can make this warning go away by installing Visual Studio 2008. You can download the Express Edition installer from http://go.microsoft.com/?linkid=7729279
+ 0:19.75   warnings.warn('Hacking environment to allow binary Python '
+ 0:19.89 checking Python environment is Mozilla virtualenv... yes
+ 0:20.00 checking for perl5... no
+ 0:20.00 checking for perl... /bin/perl
+ 0:20.22 checking for gcc... cl
+ 0:24.18 checking whether the C compiler (cl  ) works... yes
+ 0:24.18 checking whether the C compiler (cl  ) is a cross-compiler... no
+ 0:24.39 checking whether we are using GNU C... no
+ 0:24.63 checking whether cl accepts -g... no
+ 0:26.69 checking for c++... cl
+ 0:27.16 checking whether the C++ compiler (cl  ) works... yes
+ 0:27.16 checking whether the C++ compiler (cl  ) is a cross-compiler... no
+ 0:27.38 checking whether we are using GNU C++... no
+ 0:27.63 checking whether cl accepts -g... no
+ 0:27.66 checking for ranlib... :
+ 0:27.69 checking for ml... /c/Program Files (x86)/Microsoft Visual Studio 12.0/VC/BIN/ml
+ 0:27.85 checking for ar... no
+ 0:27.88 checking for ld... link
+ 0:27.91 checking for strip... no
+ 0:27.94 checking for windres... no
+ 0:28.82 checking for midl... midl
+ 0:31.35 checking for std::_Throw... no
+ 0:31.86 checking for overridable _RAISE... yes
+ 0:32.97 checking for winsdkver.h... yes
+ 0:33.52 checking for highest Windows version supported by this SDK... 0x06030000
+ 0:34.10 checking for Windows SDK being recent enough... yes
+ 0:34.32 checking how to run the C preprocessor... cl -E -nologo
+ 0:34.32 checking how to run the C++ preprocessor... cl -TP -E -nologo
+ 0:34.58 checking for a BSD compatible install... /bin/install -c
+ 0:34.68 checking whether ln -s works... no
+ 0:34.74 checking for minimum required perl version >= 5.006... 5.006001
+ 0:34.89 checking for full perl installation... yes
+ 0:34.91 checking for doxygen... :
+ 0:34.94 checking for autoconf... /bin/autoconf
+ 0:35.03 checking for unzip... /h/mozilla-build/info-zip/unzip
+ 0:35.13 checking for zip... /h/mozilla-build/info-zip/zip
+ 0:35.21 checking for xargs... /bin/xargs
+ 0:35.27 checking for rpmbuild... :
+ 0:35.33 checking for h:/mozilla-build/mozmake/mozmake.EXE... h:/mozilla-source/mozilla-central/configure: line 5405: test: /local/bin/h: binary operator expected
+ 0:35.33 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/wget/h: binary operator expected
+ 0:35.33 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/7zip/h: binary operator expected
+ 0:35.33 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/blat261/full/h: binary operator expected
+ 0:35.33 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/python/h: binary operator expected
+ 0:35.35 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/svn-win32-1.6.3/bin/h: binary operator expected
+ 0:35.35 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/upx203w/h: binary operator expected
+ 0:35.35 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/emacs-24.3/bin/h: binary operator expected
+ 0:35.35 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/info-zip/h: binary operator expected
+ 0:35.35 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/nsis-2.46u/h: binary operator expected
+ 0:35.35 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/nsis-3.0a2/h: binary operator expected
+ 0:35.36 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/wix-351728/h: binary operator expected
+ 0:35.36 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/hg/h: binary operator expected
+ 0:35.36 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/python/Scripts/h: binary operator expected
+ 0:35.36 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/kdiff3/h: binary operator expected
+ 0:35.36 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/yasm/h: binary operator expected
+ 0:35.36 h:/mozilla-source/mozilla-central/configure: line 5405: test: /h/mozilla-build/mozmake/h: binary operator expected
+ 0:35.38 h:/mozilla-source/mozilla-central/configure: line 5405: test: ./h: binary operator expected
+ 0:35.38 h:/mozilla-source/mozilla-central/configure: line 5405: test: /local/bin/h: binary operator expected
+ 0:35.38 h:/mozilla-source/mozilla-central/configure: line 5405: test: /mingw/bin/h: binary operator expected
+ 0:35.38 h:/mozilla-source/mozilla-central/configure: line 5405: test: /bin/h: binary operator expected
+ 0:35.38 h:/mozilla-source/mozilla-central/configure: line 5405: test: /c/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE/CommonExtensions/Microsoft/Tes
+tWindow/h: binary operator expected
+………………………………………………………………………………………….
+………………………………………………………………………………………….
+45:31.61 h:/mozilla-source/mozilla-central/browser/devtools/webide/webide-prefs.js: WARNING: no useful preprocessor directives found
+45:34.00 module.res
+45:34.02 Creating Resource file: module.res
+45:34.49 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:34.49
+45:34.49 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:34.49
+45:34.49
+45:34.49 firefox.exe
+45:35.61 Embedding manifest from h:/mozilla-source/mozilla-central/browser/app/firefox.exe.manifest
+45:41.44 TestVolatileBuffer.exe
+45:41.52 TestLineBreak.exe
+45:41.52 PrimitiveTest.exe
+45:41.52 SimpleTypeLib.exe
+45:41.58 xpcomsample.lib.desc
+45:41.60 test_tone.exe
+45:41.60 test_audio.exe
+45:41.72 NormalizationTest.exe
+45:41.72 UnicharSelfTest.exe
+45:41.80 module.res
+45:41.82 Creating Resource file: module.res
+45:41.85 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:41.85
+45:41.85 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:41.85
+45:41.85
+45:41.85 TestStreamConv.exe
+45:42.55 test_latency.exe
+45:42.83 test_sanity.exe
+45:43.39 nsIFileEnumerator.exe
+45:43.41 TestArguments.exe
+45:43.63 TestBlockingProcess.exe
+45:43.89 module.res
+45:43.91 Creating Resource file: module.res
+45:44.36 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:44.36
+45:44.36 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:44.36
+45:44.36
+45:44.36 xpcshell.exe
+45:44.44 module.res
+45:44.44 module.res
+45:44.47 Creating Resource file: module.res
+45:44.47 Creating Resource file: module.res
+45:44.58 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:44.58
+45:44.58 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:44.58
+45:44.58
+45:44.58 xpctest.dll
+45:44.58 TestCallTemplates.exe
+45:44.60 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:44.60
+45:44.60 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:44.60
+45:44.60
+45:44.60 plugin-container.exe
+45:44.63 TestINIParser.exe
+45:45.30 TestPRIntN.exe
+45:45.33 PropertiesTest.exe
+45:45.33 ReadNTLM.exe
+45:46.03 test_AsXXX_helpers.exe
+45:46.03 test_async_callbacks_with_spun_event_loops.exe
+45:46.25 module.res
+45:46.27 Creating Resource file: module.res
+45:46.30 TestBlockingSocket.exe
+45:46.32 Embedding manifest from h:/mozilla-source/mozilla-central/js/xpconnect/shell/xpcshell.exe.manifest
+45:46.33 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:46.33
+45:46.33 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:46.33
+45:46.33
+45:46.33 rdfcat.exe
+45:46.36 TestQuickReturn.exe
+45:46.36    Creating library fake.lib and object fake.exp
+45:46.36
+45:46.67 TestRacingServiceManager.exe
+45:46.67 test_asyncStatementExecution_transaction.exe
+45:46.71 Embedding manifest from h:/mozilla-source/mozilla-central/ipc/app/plugin-container.exe.manifest
+45:46.77 module.res
+45:46.77 Creating Resource file: module.res
+45:46.94 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:46.94
+45:46.94 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:46.94
+45:46.94
+45:46.94 rdfpoll.exe
+45:47.14 TestCallbacks.exe
+45:47.50 TestRegistrationOrder.exe
+45:47.82 test_binding_params.exe
+45:48.07 module.res
+45:48.08 Creating Resource file: module.res
+45:48.11 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:48.11
+45:48.11 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:48.11
+45:48.11
+45:48.11 triplescat.exe
+45:48.30 TestCookie.exe
+45:48.30 TestThreadPoolListener.exe
+45:48.36 test_file_perms.exe
+45:48.52 TestTimers.exe
+45:48.55 TestDNS.exe
+45:48.58 TestAudioChannelService.exe
+45:48.61 TestUnicodeArguments.exe
+45:49.80 test_mutex.exe
+45:51.02 test_service_init_background_thread.exe
+45:51.02 TestIncrementalDownload.exe
+45:51.02 TestAppShellSteadyState.exe
+45:51.10 TestBase64.exe
+45:51.32 TestOpen.exe
+45:51.42 TestWebGLElementArrayCache.exe
+45:51.82 TestCSPParser.exe
+45:51.83 TestGetURL.exe
+45:52.25 TestSTLWrappers.exe
+45:52.53 TestNativeXMLHttpRequest.exe
+45:52.53 TestAudioEventTimeline.exe
+45:52.57 TestPageLoad.exe
+45:52.72 test_statement_scoper.exe
+45:52.80 ShowAlignments.exe
+45:52.92 TestProtocols.exe
+45:53.35 test_StatementCache.exe
+45:53.58 TestAudioMixer.exe
+45:53.88 TestAutoPtr.exe
+45:53.92 TestPlainTextSerializer.exe
+45:54.17 TestServ.exe
+45:54.22 TestAutoRef.exe
+45:54.44 TestTXMgr.exe
+45:54.83 test_transaction_helper.exe
+45:55.00 TestStandardURL.exe
+45:55.28 TestCOMArray.exe
+45:55.78 host_ListCSSProperties.exe
+45:56.41 TestStreamLoader.exe
+45:56.48 TestCOMPtr.exe
+45:56.50 test_true_async.exe
+45:56.61 TestCertDB.exe
+45:56.66 test_unlock_notify.exe
+45:56.73 TestCOMPtrEq.exe
+45:57.30 TestUpload.exe
+45:58.45 TestDeque.exe
+45:58.67 TestURLParser.exe
+45:58.70 TestFile.exe
+45:58.81 urltest.exe
+45:58.83 TestHashtables.exe
+45:58.91 test_IHistory.exe
+45:59.00 module.res
+45:59.02 Creating Resource file: module.res
+45:59.06 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+45:59.06
+45:59.06 Copyright (C) Microsoft Corporation.  All rights reserved.
+45:59.06
+45:59.06
+45:59.06 testcrasher.dll
+45:59.19 TestStartupCache.exe
+45:59.52 TestSTSParser.exe
+46:00.08 TestID.exe
+46:00.33 TestObserverArray.exe
+46:00.66 TestUDPSocket.exe
+46:00.70 TestObserverService.exe
+46:01.67 TestPipe.exe
+46:01.86 TestPLDHash.exe
+46:01.92 nsTestSample.exe
+46:02.58 TestRefPtr.exe
+46:03.03    Creating library testcrasher.lib and object testcrasher.exp
+46:03.03
+46:03.23 TestStringAPI.exe
+46:03.31 TestTArray.exe
+46:03.41 TestTextFormatter.exe
+46:03.41 TestThreadUtils.exe
+46:03.45 TestJemalloc.exe
+46:05.61 TestMinStringAPI.exe
+46:05.65 TestCOM.exe
+46:05.65 TestNtPathToDosPath.exe
+46:05.72 module.res
+46:05.72 module.res
+46:05.73 Creating Resource file: module.res
+46:05.73 Creating Resource file: module.res
+46:05.75 module.res
+46:05.76 Creating Resource file: module.res
+46:05.78 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+46:05.78
+46:05.78 Copyright (C) Microsoft Corporation.  All rights reserved.
+46:05.78
+46:05.78
+46:05.78 testcomponent.dll
+46:05.80 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+46:05.80
+46:05.80 Copyright (C) Microsoft Corporation.  All rights reserved.
+46:05.80
+46:05.80
+46:05.80 testcompnoaslr.dll
+46:05.83 Microsoft (R) Windows (R) Resource Compiler Version 6.3.9600.16384
+46:05.83
+46:05.83 Copyright (C) Microsoft Corporation.  All rights reserved.
+46:05.83
+46:05.83
+46:05.83 test656331.dll
+46:06.20    Creating library fake.lib and object fake.exp
+46:06.20
+46:06.20    Creating library fake.lib and object fake.exp
+46:06.20
+46:06.23    Creating library fake.lib and object fake.exp
+46:06.23
+46:52.95 Packaging quitter@mozilla.org.xpi...
+Single process terminated successfully
+46:54.45 639 compiler warnings present.
+We know it took a while, but your build finally finished successfully!
+To take your build for a test drive, run: |mach run|
+For more information on what to do now, see https://developer.mozilla.org/docs/Developer_Guide/So_You_Just_Built_Firefox
+SA@WorkStation /h/mozilla-source/mozilla-central
+$ </pre>
+<p>Build is successful, therefore, we can run this nightly build of firefox,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ ./mach run</pre>
+<p>Firefox nightly build starts with checking compatibility of Add-Ons,</p>
+<p id="image"><a href="http://4.bp.blogspot.com/-jdxh9osbTMk/U7P7ZS3j5JI/AAAAAAAABlE/TDkn8fTCKJc/s1600/Mozilla-Starting.png" title="Click image to zoom - Checking Add-ons"><img src="http://4.bp.blogspot.com/-jdxh9osbTMk/U7P7ZS3j5JI/AAAAAAAABlE/TDkn8fTCKJc/s1600/Mozilla-Starting.png" /></a></p>
+<p>A moment later, Firefox shows up,</p>
+<p id="image"><a href="http://2.bp.blogspot.com/-cXNI3ZmISQk/U7P7Y5iPxpI/AAAAAAAABk0/yISFyO0uESs/s1600/Mozilla-FF-Nightly.png" title="Click image to zoom - Nightly Running"><img src="http://2.bp.blogspot.com/-cXNI3ZmISQk/U7P7Y5iPxpI/AAAAAAAABk0/yISFyO0uESs/s1600/Mozilla-FF-Nightly.png" /></a></p>
+<p>If we click on the About from Help Section from the Menu button on top right side corner of the window we get about dialog box of the nightly build,</p>
+<p id="image"><a href="http://1.bp.blogspot.com/-QWxVR80C9Y0/U7P7YktrhcI/AAAAAAAABkw/6k9V2kXKplw/s1600/About_Nightly.png" title="Click image to zoom - About Nightly Build"><img src="http://1.bp.blogspot.com/-QWxVR80C9Y0/U7P7YktrhcI/AAAAAAAABkw/6k9V2kXKplw/s1600/About_Nightly.png" /></a></p>
+
+<p>Occasionally, you might get an error while trying to build that says to run mach clobber as incremental build is not working. In that case, run commands as displayed below,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ ./mach clobber
+$ ./mach build</pre>
+<p>Then build completes successfully.</p>
+<h4>Building Mozilla Firefox Setup Installer</h4>
+<p>It can be difficult to figure out how to build  the installer. Actually, it's pretty easy. If your .mozconfig file contains following line,</p>
+<pre class="brush: plain; first-line: 1; tab-size: 5; toolbar: false;">mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-ff</pre>
+<p>It means object files and executable files will be created inside obj-ff directory. To build the installer we have to change directory and run make installer command</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">
+$ cd obj-ff
+$ ../build/pymake/make.py installer</pre>
+<p>To clean up this directory we need to run,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">
+$ cd obj-ff
+$ ../build/pymake/make.py clean</pre>
+<p>There are videos on youtube which you can watch to guide yourself as well.</p>
+
+<h3>Working with Mozilla Firefox Code</h3>
+<p>To open firefox source code as a project in Visual studio you can run this,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">$ mach build-backend -b VisualStudio</pre>
+
+<p>However, Visual Studio support is not yet good enough. It seems to occupy a lot of memory and Intellisense does not seem to work as expected. Mozilla team really needs to work to improve this.</p>
+<p>Let's talk about the code. Remember, while working with code from mozilla-central, there are many unnecessary directories included with Mozilla-central. Documentation on the directory structure is here: <a href="https://developer.mozilla.org/en/docs/Mozilla_Source_Code_Directory_Structure">Mozilla_Source_Code_Directory_Structure</a></p>
+<ul><li>Windows wmain function resides in <a href="http://lxr.mozilla.org/mozilla-central/source/toolkit/xre/nsWindowsWMain.cpp?force=1">toolkit\xre\nsWindowMain.cpp</a></li>
+<li><a href="https://developer.mozilla.org/en/docs/Building_Firefox_with_Debug_Symbols">Then, it calls the main function in: <a href="http://lxr.mozilla.org/mozilla-central/source/browser/app/nsBrowserApp.cpp?force=1">browser\app\nsBrowserApp.cpp</a> which then calls do_main function in the same file</a></li>
+<li>Mouse wheel, move etc functions reside <a href="http://lxr.mozilla.org/mozilla-central/source/widget/windows/nsWindow.cpp?force=1">widget/windows/nsWindow.cpp</a></li></ul>
+<p>You can browse mozilla source code online at: <a href="http://mxr.mozilla.org/mozilla-central/">http://mxr.mozilla.org/mozilla-central</a></p>
+
+<h4>Including Your Favorite Extensions with Your Custom Built Firefox</h4>
+<p>First, extract extensions as they are usually zip archives. Copy extracted directory to dist/bin/browser/extensions. For example, if we want to include <a href="http://hola.org/">hola extension</a> first we have to download the xpi file and rename it to zip. After extraction it gives a directory titled "jid1-4P0kohSJxU1qGg@jetpack". Hence, here are the steps to follow,</p>
+
+<ul><li>First, we have to put deployed extension directory named "jid1-4P0kohSJxU1qGg@jetpack" into directory "browser\extensions"</li>
+<li>We have to add following contents to %APPDATA%\Mozilla\Firefox\Profiles\xxxxx.default\extensions.json</li></ul>
+<pre class="brush: plain; first-line: 1; tab-size: 5; toolbar: false;">{"schemaVersion":16,"addons":[{"id":"jid1-4P0kohSJxU1qGg@jetpack","syncGUID":"KFOFwYC6eAfX","location":"app-global","version":"1.3.276","type":"extension","internalName":null,"updateURL":"https://hola.org/firefox_ext_update.rdf","updateKey":null,"optionsURL":null,"optionsType":null,"aboutURL":null,"iconURL":null,"icon64URL":null,"defaultLocale":{"name":"Hola Unblocker","description":"Uncensored Internet - access any site from anywhere!","creator":"Hola","homepageURL":"https://hola.org"},"visible":true,"active":true,"userDisabled":false,"appDisabled":false,"descriptor":"h:\\mozilla-source\\mozilla-central\\obj-i686-pc-mingw32\\dist\\bin\\browser\\extensions\\jid1-4P0kohSJxU1qGg@jetpack","installDate":1400059317433,"updateDate":1400059317433,"applyBackgroundUpdates":1,"bootstrap":true,"size":2310674,"sourceURI":null,"releaseNotesURI":null,"softDisabled":false,"foreignInstall":false,"hasBinaryComponents":false,"strictCompatibility":false,"locales":[],"targetApplications":[{"id":"{ec8030f7-c20a-464f-9b0e-13a3a9e97384}","minVersion":"12.0","maxVersion":"30.0"}],"targetPlatforms":[]}
+</pre>
+<p>You need to find a way to automate this so that it runs after installing firefox. When this firefox is run first time it asks user whether to enable this extension,</p>
+<p id="image"><a href="http://1.bp.blogspot.com/-ue_HIeYsI24/U7P7ahR6NTI/AAAAAAAABlU/4jjEwOF2VNk/s1600/ext_install_add-on.png" title="Click image to zoom - Enable Extension"><img src="http://1.bp.blogspot.com/-ue_HIeYsI24/U7P7ahR6NTI/AAAAAAAABlU/4jjEwOF2VNk/s1600/ext_install_add-on.png" /></a></p>
+<p>It is possible to create custom firefox that includes extensions and does not even ask for confirmation. Hence, folks, be careful when you download browser from 3rd party sites because of what they are capable of.</p>
+
+<h4>Debugging</h4>
+<p>There are many debugging options and detailed information you can find on documentation pages of mozilla site:</p>
+<ul><li><a href="https://developer.mozilla.org/en/docs/Configuring_Build_Options">Configuring Build Options</a></li>
+<li><a href="https://developer.mozilla.org/en/docs/Building_Firefox_with_Debug_Symbols">Building Firefox with Debug Symbols</a></li>
+<li><a href="https://developer.mozilla.org/en/docs/Debugging_Mozilla_on_Windows_FAQ">Debugging Mozilla on Windows FAQ</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Mozilla/Debugging">mozilla - Debugging</a></li></ul>
+
+<h4>References</h4>
+<ul><li><a href="https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Build_Instructions">mozilla - Detailed Build Instructions</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Build_Instructions/Windows_Prerequisites">mozilla - Windows build prerequisites</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Simple_Firefox_build">mozilla - Simple Firefox build</a></li>
+<li><a href="http://gregoryszorc.com/blog/2013/02/28/moz.build-files-and-the-firefox-build-system/">gregoryszorc blog - moz.build Files and the Firefox Build System</a></li></ul>

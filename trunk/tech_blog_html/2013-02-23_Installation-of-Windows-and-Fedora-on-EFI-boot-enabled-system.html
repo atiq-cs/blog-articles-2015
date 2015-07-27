@@ -1,0 +1,109 @@
+<p>This article includes instruction for both Windows and Linux. However, for better understanding, you should peruse entire article.</p>
+<h3>Windows Installation with EFI</h3>
+<p>Legacy boot enabled OSs install bootloader on first 446 bytes of active primary partition in MBR disks (disks with MBR/Legacy Partition Layout). On EFI disks, EFI enabled operating systems put required EFI files for boot into a reserved EFI partition. EFI bootloader applications are EFI files which should properly be put in System's EFI partition.</p>
+<div style="width: 300px; height: 250px; background: #252525; float: left; margin-right: 10px;">
+<!-- Post ad 01_medium -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:300px;height:250px"
+     data-ad-client="ca-pub-1497529643036617"
+     data-ad-slot="6722199079"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script></div><p>As for Windows installations Windows automatically detects whether the system is using EFI or legacy and thus, installation proceeds. Usually there is also an option in modern mainboards: BIOS to enable/disable EFI boot feature. When this feature is enabled for GPT disks Windows will install EFI bootloader instead of legacy/mbr bootloader.</p>
+
+<p>When your hard-disk size is 2 TB or more GPT is better. Legacy mbr layout for hard disks are getting out-dated. The future is GPT which has advantage of creating numerous primary partitions and, has built-in recovery features.</p>
+
+<h4>Finding Out What Partition Layout your Hard disk uses</h4>
+<p>To know what partition layout is used by your hard disk follow procedure below. If you are using <strong>Linux</strong> skip <strong>Windows</strong> section</p>
+<h5>Procedure to Find Out Partition Layout on Windows</h5>
+<p>Fire up a command prompt with admin privilege and run command as illustrated below. Commands are given after '&gt;' symbol. A command is follows by single or several lines of output:</p>
+<pre class="brush: plain; first-line: 1; tab-size: 5; toolbar: false; ">Microsoft Windows [Version 6.3.9600]
+(c) 2013 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>diskpart
+
+Microsoft DiskPart version 6.3.9600
+
+Copyright (C) 1999-2013 Microsoft Corporation.
+On computer: SAOSLab_WS
+
+DISKPART> list disk
+
+  Disk ###  Status         Size     Free     Dyn  Gpt
+  --------  -------------  -------  -------  ---  ---
+* Disk 0    Online          931 GB      0 B        *
+
+DISKPART></pre>
+<p>As you can see a * on Gpt column indicates that the disk uses GPT layout (for EFI boot).</p>
+<h5>Procedure to Find Out Partition Layout on Linux</h5>
+<p>First of all you need to login as root in a terminal.</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false; ">$ su - root
+Enter password: 
+
+# </pre>
+<p>The prompt '#' indicates that you are logged in as root. Now, if you have multiple drives in your system, to find out the drive id apply following command:</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false; "># fdisk -l</pre>
+<p>It will give you the list of drives with information from which you will be able to recognize your hard-drive that you want to view partition layout. If you have single hard drive its drive id will be <strong>sda</strong>. If you have multiple drives second one will be <strong>sdb</strong>, third <strong>sdc</strong> and so on. For example, you want to view partition layout info for drive <strong>sda</strong> apply following command</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false; "># parted /dev/sda p</pre>
+<p>If your hard drive uses mbr/legacy layout it will be displayed as <strong>layout: msdos</strong> on the output of the command you just applied.</p>
+
+<p>If you're decided that you shall go with GPT but you have a hard-disk which has legacy/mbr/msdos layout you should follow procedure presented below:</p>
+<div align="center" style="width: 468px; height: 60px; background: #252525;  margin-left: auto; margin-right: auto; padding-bottom: 10px;">
+<!-- Post ad 02_flat -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:468px;height:60px"
+     data-ad-client="ca-pub-1497529643036617"
+     data-ad-slot="3489531077"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script></div>
+<h3>Converting MBR disk to GPT disk</h3>
+<p>You can use an existing Windows or use the command prompt of recovery tool of Windows 7/8 Installation DVD to follow the procedure. You have to start command prompt as administrator if you run from existing Windows and then apply 'diskpart' command. If you are running from recovery console you only to run diskpart
+<pre class="brush: plain;">C:\Windows\system32&gt;diskpart
+
+Microsoft DiskPart version 6.2.9200
+
+Copyright (C) 1999-2012 Microsoft Corporation.
+On computer: SAOSLab_WS</pre></p>
+<p>On disk-part prompt list your disks and select the disk that you want to convert to GPT:
+<pre class="brush: plain;">DISKPART&gt; list disk
+
+  Disk ###  Status         Size     Free     Dyn  Gpt
+  --------  -------------  -------  -------  ---  ---
+  Disk 0    Online          465 GB  3072 KB
+  Disk 1    Online          465 GB    15 MB
+
+DISKPART&gt; select disk 1
+
+Disk 1 is now the selected disk.</pre></p>
+<p>Run clean command to delete all partitions, Be sure to backup data from the hard-disk before proceeding with this command.
+<pre class="brush: plain;">DISKPART&gt; clean</pre></p>
+<p>This should wipe out all partitions.</p>
+<p>Now run convert
+<pre class="brush: plain;">DISKPART&gt; convert gpt</pre></p>
+<p>Where 'convert gpt' command converts a disk layout to GPT 'convert mbr' converts to mbr. Before proceeding with installation of Windows or other OS we need to create the EFI and MSR partitions. Following commands perform this,
+<pre class="brush: plain;">DISKPART&gt; create partition efi size=112</pre></p>
+<p>which creates an EFI partition of 112 MB. To format the partition,
+<pre class="brush: plain;">DISKPART&gt; format fs=fat32 quick</pre></p>
+<p>the efi partition is formatted used fat32 filesystem. EFI requires fat or fat32 filesystem. We also need to create a microsoft reserved partition which can be of size 50 MB
+<pre class="brush: plain;">DISKPART&gt; create partition msr size=50</pre></p>
+<p>Now let's go ahead and create a primary partition where Windows will be installed.
+<pre class="brush: plain;">DISKPART&gt; create partition primary size=102400</pre></p>
+<p>It creates a partition with size 100 GB. Let's mark it as active partition.
+<pre class="brush: plain;">DISKPART&gt; active</pre></p>
+<p>The format operation is optional, which can be done with following command,
+<pre class="brush: plain;">DISKPART&gt; format fs=ntfs label="WinOS" quick</pre></p>
+<p>Now we can go ahead with Windows installation. During installation of Windows when partition selection screen appears we have to select the partition of 100 GB for installation. Window will automatically put its efi bootloader files inside EFI partition.</p>
+<h3>Installation of Fedora 18 in GPT disks with EFI boot enabled (dual boot with Windows)</h3>
+<div style="width: 300px; height: 250px; background: #252525; float: right; margin-left: 10px;">
+<!-- Post ad 01_medium -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:300px;height:250px"
+     data-ad-client="ca-pub-1497529643036617"
+     data-ad-slot="6722199079"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script></div>
+<p>Fedora 18, 17, 16 releases has by default EFI support. I am not sure about the earlier releases than 16 about EFI support as I haven't tested. If you are creating a bootable USB stick using livecd-tools be sure to add these options: "--efi --format --msdos --reset-mbr". Otherwise EFI support will not be available with installation from bootable usb.</p>
+<p>Installation procedure for Fedora 18 with EFI boot is same to regular installations except the boot partition selection. During partition selection after selecting the root partition change the mount point of EFI partition that you have created earlier with "/boot/efi"</p>
+<p>Rest of the parts proceed with the installation in regular way. After installation is complete Fedora will be listed on EFI boot managers. Usually, Windows is boot by osbootmgr, Fedora is named as Fedora. Only problem is that I have to manually select Fedora each time otherwise Windows gets booted by default.</p>

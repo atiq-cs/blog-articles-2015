@@ -1,0 +1,69 @@
+<p>Consider this scenaio: you have installed openwrt on your <a href="http://www.tp-link.com/lk/products/details/?model=TL-WR841N
+">TL- WR841N Router (a 300Mbps Wireless N Router)</a>. Some time later you decide to go back to original firmware which was provided by TP-Link. There can be several cogent reasons for doing so. Firmware download page for version 9 of 841N is here: <a href="http://www.tp-link.com/en/support/download/?model=TL-WR841ND&version=V9
+">tp-link.com/en/support/download/?model=TL-WR841ND&version=V9
+</a> We are using version 9 for our experiment.</p>	
+
+<h3>The Problem</h3>
+<p>The procedure to follow for going back to original firmware is as simple as this:</p>
+<ul><li>Fire up an ssh prompt ( you can use putty or other ssh-client) ip address of the router is 192.1.68.1.1 when you connect the router with your PC with a lan cable attaced to LAN port of the router.</li>
+<li>After downloading the firmware, for example, we rename the file [wr841nv9_en_3_14_4_up_boot(131129).bin ] to tlwr841n-firm-orig.bin I uploaded it to our domain so that we could retrieve it using wget in the router. For convenience of users <a href="http://saos.azurewebsites.net/Downloads/tlwr841n-firm-orig.bin">firmware URL</a> is still accessible.</li>
+<li>Then you run following commands on the shell (this is how the openwrt shell looks like):</li></ul>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">
+
+_____                     ________        __
+ |       |.-----.-----.-----.|  |  |  |.----.|  |_
+ |   -   ||  _  |  -__|     ||  |  |  ||   _||   _|
+ |_______||   __|_____|__|__||________||__|  |____|
+          |__| W I R E L E S S   F R E E D O M
+ -----------------------------------------------------
+ BARRIER BREAKER (Bleeding Edge, r40776)
+ -----------------------------------------------------
+  * 1/2 oz Galliano         Pour all ingredients into
+  * 4 oz cold Coffee        an irish coffee mug filled
+  * 1 1/2 oz Dark Rum       with crushed ice. Stir.
+  * 2 tsp. Creme de Cacao
+ -----------------------------------------------------
+root@OpenWrt:~# cd /tmp
+root@OpenWrt:~# wget http://saos.azurewebsites.net/Downloads/tlwr841n-firm-orig.bin
+Connecting to saoslab.com (115.112.214.132:80)
+tlwr841n-firm-orig.bin          100% |**********************|  3968k  0:00:00 ETA
+
+root@OpenWrt:/tmp# mtd -r write /tmp/tlwr841n-firm-orig.bin firmware
+Unlocking firmware …
+Writing from /tmp/tlwr841n-firm-orig.bin to firmware ...  [e]Failed to erase block</pre>
+
+<p>This error that says that mtd failed to erase block, is fatal. If we don’t upload a proper firmware router at this moment router will get bricked next time it boots.</p>
+
+<p>Anyway, for firmware file with boot in its name (remember, latest firmware file name of v9 is wr841nv9_en_3_14_4_up_boot(131129).bin) there is a trick to apply which is discussed on next section</p>
+
+<h3>Solution</h3>
+<p style="text-align:left">We have  to strip first 257 bytes. Reference instructions page is here: <a href="http://wiki.openwrt.org/toh/tp-link/tl-wr841nd#go.back.to.original.firmware">http://wiki.openwrt.org/toh/tp-link/tl-wr841nd#go.back.to.original.firmware</a></p>
+
+<p>We create a new firmware file stripping those bytes from the original.</p>
+
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">root@OpenWrt:/tmp# dd if=tlwr841n-firm-orig.bin of=tplink.bin skip=257 bs=512
+7680+0 records in
+7680+0 records out
+
+root@OpenWrt:/tmp# rm tlwr841n-firm-orig.bin
+
+root@OpenWrt:/tmp# sysupgrade /tmp/tplink.bin
+Saving config files...
+killall: watchdog: no process killed
+Sending TERM to remaining processes ... ubusd askfirst logd netifd odhcpd uhttpd ntpd dnsmasq
+Sending KILL to remaining processes ... askfirst
+Switching to ramdisk...
+Performing system upgrade...
+Unlocking firmware ...
+Writing from <stdin> to firmware ...
+Upgrade completed
+Rebooting system...</pre>
+
+<p>After reboot our stock firmware is back. Remember stock firmware gets up at ip <a href="http://192.168.0.1">192.168.0.1</a></p>
+<p id="image"><a href="http://1.bp.blogspot.com/-u1KRR9AZ2Q4/U6Et_bRr8XI/AAAAAAAABkA/U7idiTt6b3U/s1600/tp-link-wr841n-web.png" title="Tp Link stock firmware web user interface"><img src="http://1.bp.blogspot.com/-u1KRR9AZ2Q4/U6Et_bRr8XI/AAAAAAAABkA/U7idiTt6b3U/s320/tp-link-wr841n-web.png" /></a></p>
+<p>However, to be safe I uploaded the firmware (this time with original firmware bin file) again using upgrade firmware option in the menu of web UI: System Tools -> Upgrade Firmware.</p>
+
+<h3>Fixing Back Openwrt After mtd Failure</h3>
+<p style="text-align:left">After you got an error message applying mtd command as mentioned before and you decide that you will stick with openwrt instead of going back to stock firmware you can do that. However, you must upload an openwrt firmware using sysupgrade command. But, you will face a new problem after performing sysupgrade. Your router will forget root password. So, you cannot login using ssh or access using luci Web Interface. But, there is nothing to panic. You still can login using telnet to 192.168.1.1 and apply new password using passwd command. That'll fix the problem. Now, you can login using ssh to make further changes as per your requirement.</p>
+<br>
+<p>Commit (r9): January 28, 2015</p>

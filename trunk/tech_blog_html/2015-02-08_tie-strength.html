@@ -1,0 +1,65 @@
+<p>We are going to address following questions regarding the paper: "Predicting Tie Strength With Social Media" by Eric Gilbert and Karrie Karahalios.</p>
+<ul><li>What problem does the paper solve?</li>
+<li>How much does the paper promise and how much does it achieve with contrast to contemporary papers?</li>
+<li>What is the current state of the art of the work?</li>
+<li>What are shortcomings of the paper?</li></ul>
+
+<p>In this post, I'll be drawing some topics from that intro lecture I have attended recently,</p>
+<h3>Paper comments</h3>
+<ul><li><a href="http://dl.acm.org/citation.cfm?id=1592675">On the evolution of user interaction in Facebook</a>, 2009 mentioned paper has demonstrated  that the "strength of ties" varies widely, ranging from pairs of users who are best friends to pairs of users who even wished they weren’t friends.</li>
+<li><a href="http://dl.acm.org/citation.cfm?id=1963503">Differences in the mechanics of information diffusion across topics: idioms, political hashtags, and complex contagion on twitter</a>, 2011 mentions There are multiple ways of defining tie strength from social media data.</li>
+<li><a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5462138&tag=1">Routing in Socially Selfish Delay Tolerant Networks</a>, 2010 The best empirical data we can find about social tie strength is from one recent study in which participants rate their friendship nearly uniformly between 0 and 1 [13]. Thus, we generate weights for each node’s social ties that are uniformly distributed within [0,1].</li>
+<li><a href="http://dl.acm.org/citation.cfm?id=1753532">Signed networks in social media</a>, 2010 says For example, portions of our analysis can be viewed as variants on the problem of link prediction [17] and tiestrength prediction [10], but in each case adapted to take the signs of links into account.</li>
+<li><a href="http://dl.acm.org/citation.cfm?id=1753587">What do people ask their social networks, and why?</a>, 2010 says Researchers have explored many aspects of how social networking services are used. For example, Gilbert and Karahalios [12] studied which properties of connections between Facebook users were useful in predicting weak or strong offline social ties. Lampe et al. looked at how university students’ perceptions and use of Facebook changed over time [19].</li>
+<li><a href="http://dl.acm.org/citation.cfm?id=1772790">Modeling relationship strength in online social networks</a>, 2010 mentions In addition, this past work focused on supervised learning methods, which requires human annotation of link strength (e.g., friendship rating [7] or top friend nomination [11]).</li>
+<li><a href="http://dl.acm.org/citation.cfm?id=2145361">Tie strength in question & answer on social network sites</a>, 2012 mentions that Recent work by Gilbert and Karahalios [10] looked at Granovetter's denotation of strong and weak ties within real-life offline social networks and found a series of features (number of mutual friends, number of words exchanged, and so on) that can effectively predict tie strength between friends in an online social network. Granovetter highlighted the role of tie strength in information exchange between people, and as such, models of tie strength online can help us to understand the exchange of information through questions and answers online. We build upon their algorithm in our work looking at what kinds of friends provide valuable answers to questions on SNS.</li>
+</ul>
+
+<p>A definition of algorithm would be complete if it contains following,</p>
+
+<ul><li>a set of rules that precisely defines a sequence of operations [<a href="#refer">2</a>]</li>
+<li>finite number of steps</li>
+<li>it would stop eventually</li></ul></p>
+
+<p>The name algorithm is originated from the name of a Latin translation of a book written by al-Khwārizmī, a 9th century Persian mathematician. [<a href="#refer">2</a>]</p>
+
+<p>Desirable properites of algorithms are
+<ul>
+<li>Correctness: An algorithm is said to be correct if, for every input instance, it halts with the correct output.</li>
+<li>Efficiency: Efficiency is easily achievable if we give up on correctness.</li></ul></p>
+
+<h3>Correctness and Efficiency</h3>
+<p>Surprisingly, sometimes incorrect algorithms can also be useful if we can control the error rate. For example,
+<ul><li>Randomized algorithms: <a href="http://amstat.tandfonline.com/doi/pdf/10.1080/01621459.1949.10483310#.VM__EdXF92J">Monte Carlo</a> is always efficient but sometimes incorrect, <a href="http://en.wikipedia.org/wiki/Las_Vegas_algorithm">Las Vegas</a>: always correct but sometimes inefficient</li>
+<li>Approximation algorithms are always incorrect</li></ul></p>
+
+<p>Some measures of efficiency
+<ul><li>time complexity</li>
+<li>space complexity: main memory and virtual memory limit</li>
+<li>cache complexity: several levels of cache</li>
+<li>I/O complexity: swap between main memory and disk</li>
+<li>energy usage</li>
+<li>number of processors/cores used</li>
+<li>network bandwidth</li></ul></p>
+
+<h3>Performance bounds</h3>
+<p>
+<ol><li>worst-case complexity: maximum complexity over all inputs of a given size</li>
+<li>average complexity: average complexity over all inputs of a given size</li>
+<li>amortized complexity: worst-case bound on a sequence of operations</li>
+<li>expected complexity: for algorithms that make random choices during execution ( randomized algorithms )</li>
+<li>high-probability bound: when the probability that the complexity holds is &ge; 1 - c &frasl; n<sup>&alpha;</sup> for input size n, positive constant c, and some constant &alpha; &ge; 1</li></ol></p>
+<p>Points to be noted here,
+<ul><li>Worst-case complexity is the maximum amount taken by an algorithm.<br />Amortized analysis takes into account all of the operations of the algorithm.
+For example, consider the well known C++ data structure <a href="http://www.cplusplus.com/reference/vector/vector/">vector</a>. Every times, an insertion takes place when array is full it has to reallocate space for the array to double-size. It seems like for n insertions it might take take a lot of time. But, amortized analysis says that for n insertions complexity is it still O(n). A nice explanation is here [<a href="#refer">4</a>]</li>
+<li>High performance bound of quick sort is nlogn.</li></ul>
+
+<br />
+<a name="refer" style="color: #cc6600""><h4>References</h4></a>
+<ol><li><a href="http://www3.cs.stonybrook.edu/~rezaul/">Rezaul Chowdhury - CS StonyBrook</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Algorithm">wikipedia - Algorithm</a></li>
+<li><a href="http://mitpress.mit.edu/books/introduction-algorithms">Thomas H. Cormen - Introduction to Algorithms</a></li>
+<li><a href="http://www.cs.cornell.edu/Courses/cs3110/2011sp/lectures/lec20-amortized/amortized.htm">Lecture 20: Amortized Analysis</a></li></ol>
+
+<br />
+<p>Commit (r11): February 02, 2015</p>

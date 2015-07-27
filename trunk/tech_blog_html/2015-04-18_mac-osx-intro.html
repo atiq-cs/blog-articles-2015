@@ -1,0 +1,145 @@
+<p>Using Mac OSX for the first time can be tricky. As a first step in understanding the hardware and software platform I extract some information. Afterwards, I figure out basic keyboard shortcuts in the system.</p>
+
+<h3>Hardware and OS</h3>
+<p>In extracting System Information first thing I do is fire up a terminal and check the version of Bourne-again shell,</p>
+<pre class="brush: bash; toolbar: false;">$ echo $BASH_VERSION
+3.2.57(1)-release
+
+$ uname -a
+Darwin Research-Mac.local 14.3.0 Darwin Kernel Version 14.3.0: Mon Mar 23 11:59:05 PDT \
+2015; root:xnu-2782.20.48~5/RELEASE_X86_64 x86_64</pre>
+<p>bash version used on current stable linux OS is 4.3.30. This MAC device is running OS X Yosemite 10.10.3</p>
+	
+<p>Checking CPU information we find,</p>
+<pre class="brush: bash; toolbar: false;">$ sysctl -n machdep.cpu.brand_string
+Intel(R) Core(TM)2 Duo CPU     E8435  @ 3.06GHz
+
+$ system_profiler | grep Processor
+    Apple: AUDynamicsProcessor:
+    Apple: AUVoiceProcessor:
+2015-04-17 20:28:22.620 system_profiler[1300:88030] platformPluginDictionary: Can't get \
+X86PlatformPlugin, return value 0
+2015-04-17 20:28:22.621 system_profiler[1300:88030] platformPluginDictionary: Can't get \
+X86PlatformPlugin, return value 0
+      Processor Name: Intel Core 2 Duo
+      Processor Speed: 3.06 GHz
+      Number of Processors: 1</pre>
+<p>Following are software infomration I found,</p>
+<pre class="brush: bash; toolbar: false;">$ sw_vers
+ProductName:	Mac OS X
+ProductVersion:	10.10.3
+BuildVersion:	14D136
+
+$ sysctl vm.swapusage
+vm.swapusage: total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)
+
+$ softwareupdate -l
+Software Update Tool
+Copyright 2002-2012 Apple Inc.
+
+Finding available software
+No new software available.</pre>
+
+<h3>Development Tools</h3>
+<p>XCode Version installed is Version 6.3 (6D570). To check compiler and libraries version for C and C++ we only need to check version of gcc. As both of the commands give the same version,</p>
+<pre class="brush: bash; toolbar: false;">$ gcc --version
+Configured with: --prefix=/Applications/Xcode.app/Contents/Developer/usr --with-gxx\
+-include-dir=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/include/c++/4.2.1
+Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn)
+Target: x86_64-apple-darwin14.3.0
+Thread model: posix
+
+$ c++ --version
+Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn)
+Target: x86_64-apple-darwin14.3.0
+Thread model: posix</pre>
+
+<p>Let's see what version control systems are available,</p>
+<pre class="brush: bash; toolbar: false;">$ git --version
+git version 1.9.5 (Apple Git-50.3)
+
+$ svn --version
+svn, version 1.7.19 (r1643991)
+   compiled Feb 24 2015, 19:10:03</pre>
+<p>where git 2.1.0 and svn 1.8.11 are latest stable on Linux.</p>
+
+<h3>Disk Tools</h3>
+<p>Checking fdisk commands we find that,</p>
+<pre class="brush: bash; toolbar: false;">$ fdisk -l
+fdisk: illegal option -- l
+usage: fdisk [-ieu] [-f mbrboot] [-c cyl -h head -s sect] [-S size] [-r] [-a style] disk
+	-i: initialize disk with new MBR
+	-u: update MBR code, preserve partition table
+	-e: edit MBRs on disk interactively
+	-f: specify non-standard MBR template
+	-chs: specify disk geometry
+	-S: specify disk size
+	-r: read partition specs from stdin (implies -i)
+	-a: auto-partition with the given style
+	-d: dump partition table
+	-y: don't ask any questions
+	-t: test if disk is partitioned
+`disk' is of the form /dev/rdisk0.
+auto-partition styles:
+  boothfs     8Mb boot plus HFS+ root partition (default)
+  hfs         Entire disk as one HFS+ partition
+  dos         Entire disk as one DOS partition
+  raid        Entire disk as one 0xAC partition</pre>
+<p>As we can see the regular fdisk’s command line arguments -l doesn’t work! How can we list disk? We can use diskutil,</p>
+<pre class="brush: bash; toolbar: false;">$ diskutil list
+/dev/disk0
+   #:                       TYPE NAME                    SIZE       IDENTIFIER
+   0:      GUID_partition_scheme                        *80.0 GB    disk0
+   1:                        EFI EFI                     209.7 MB   disk0s1
+   2:                  Apple_HFS Mac Drive               79.2 GB    disk0s2
+   3:                 Apple_Boot Recovery HD             650.0 MB   disk0s3</pre>
+
+<p>We can run fdisk on disk0 which gives us,</p>
+<pre class="brush: bash; toolbar: false;">$ sudo fdisk /dev/disk0
+Password:
+Disk: /dev/disk0	geometry: 9729/255/63 [156301488 sectors]
+Signature: 0xAA55
+         Starting       Ending
+ #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
+------------------------------------------------------------------------
+ 1: EE 1023 254  63 - 1023 254  63 [         1 -  156301487] <unknown id="">
+ 2: 00    0   0   0 -    0   0   0 [         0 -          0] unused      
+ 3: 00    0   0   0 -    0   0   0 [         0 -          0] unused      
+ 4: 00    0   0   0 -    0   0   0 [         0 -          0] unused</unknown></pre>
+
+<p>fdisk still couldn't help much. Let's check if we have gnu parted,</p>
+<pre class="brush: bash; toolbar: false;">$ parted
+-bash: parted: command not found
+$ gparted
+-bash: gparted: command not found
+</pre>
+
+<p>Therefore, for disk management mostly we have to depend on GUI software tools and diskutil. We are free to install opensource software such as GNU Parted but we will talk about that later.</p>
+
+<h3>Display</h3>
+<p>This iMac device supports following display resolutions,
+</p><ul><li>1920x1200</li>
+<li>1600x1000</li>
+<li>1344x840</li>
+<li>1280x800</li>
+<li>1024x640</li></ul>
+
+As you can see supported aspect ratio is 16:10 which means you won’t have the best view when you use a traditional monitor. Height is little bit more than traditional 16:9. Even if you use teamviewer for remote access from a traditional PC with monitors that mostly support 16:9 aspect ratio (720p, 1080p) you will find an annoying scrollbar appearing (if you use original resolution) or the screen is clipped in the middle of the display. You can use a stretched resolution but that’s not something good for best view.<p></p>
+
+<h3>Keyboard shortcuts</h3>
+<p>Trust me if you have come from a Windwos background this will be pain on the ass. Following you will notice,
+</p><ul><li>Scrolling direction is opposite for the mouse wheel.</li>
+<li>Most operations done by Ctrl on Windows is done by Command button on Mac. For example, file open, file save, copy, paste, task switch and what not!</li>
+<li>Home and End buttons if you are used to using them forget about using them with combination of command button in hope that you will reach end of the line or beginning of the line. Instead use Command + Left Arrow and Command + Right Arrow. It will take time to get used to it.</li>
+<li>If you are using teamviewer from Windows machine, Windows Key turns into Command button. Therefore, when you press Windows + tab shortcut it becomes Command + tab and Windows + space to bring up spotlight search. Finally, Ctrl key is the alt button.</li></ul>
+
+Please have a look at reference links of apple for detailed keyboard shortcuts.<p></p>
+
+<h4>References</h4>
+<ul><li><a href="https://www.apple.com/support/macbasics/">Apple - MAC Basics</a></li>
+<li><a href="https://support.apple.com/en-us/HT201236">Apple - Mac keyboard shortcuts</a></li>
+<li><a href="https://support.apple.com/en-us/HT201255">Apple - Startup key combinations for Mac</a></li>
+<li><a href="https://support.apple.com/en-us/HT201639">Apple - Using Disk Utility to verify or repair disks</a></li>
+<li><a href="https://support.apple.com/kb/ph5845?locale=en_US">Apple - Disk Utility 12.x: Partition a disk</a></li></ul>
+
+<p>Commit (r1): April 18, 2015 </p>

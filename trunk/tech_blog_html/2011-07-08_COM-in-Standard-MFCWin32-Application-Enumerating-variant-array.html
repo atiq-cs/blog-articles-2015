@@ -1,0 +1,199 @@
+<p>Previous code examples I have seen which were bad code. That's why I think to present one.</p>
+<p>We follow these steps to retrieve information using COM. In the demonstrated code I'll retrieve Default gateway. So it may help COM programmers along with network application developers.</p>
+<p>Our function name is GetWMINETINFO(). With the function signature along and variables it looks like this:</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">CString NetInfoDialog::GetWMINETINFO() {
+	CString ErrorMsg;
+	HRESULT hres;
+	CString defaultGatewayIpv4, priDNS, secDNS;
+	LONG cElements, lLBound, lUBound;</pre>
+
+<p>This function will return a string if error, null if no error. First of all, we initialize COM.</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">hres =  CoInitializeEx(0, COINIT_MULTITHREADED); 
+if (FAILED(hres))
+{
+	ErrorMsg.Format(_T("Failed to initialize COM library. Error code = %d"), hres);
+    return ErrorMsg;                  // Program has failed.
+}</pre>
+
+<p>Then we set the general COM security level</p>
+
+<pre class="brush: c-sharp;">hres =  CoInitializeSecurity(
+        NULL, 
+        -1,                          // COM authentication
+        NULL,                        // Authentication services
+        NULL,                        // Reserved
+        RPC_C_AUTHN_LEVEL_DEFAULT,   // Default authentication 
+        RPC_C_IMP_LEVEL_IMPERSONATE, // Default Impersonation  
+        NULL,                        // Authentication info
+        EOAC_NONE,                   // Additional capabilities 
+        NULL                         // Reserved
+        );
+
+if (FAILED(hres))
+{
+    ErrorMsg.Format(_T("Failed to initialize security. Error code = %d"), hres);
+    CoUninitialize();
+    return ErrorMsg;                    // Program has failed.
+}</pre>
+
+<p>We get IWbemLocator,</p>
+
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">IWbemLocator *pLoc = NULL;
+
+hres = CoCreateInstance(
+    CLSID_WbemAdministrativeLocator, // changed
+    0, 
+    CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER, // changed from CLSCTX_INPROC_SERVER, 
+    IID_IUnknown, // changed from IID_IWbemLocator,
+	(LPVOID *) &amp;pLoc);
+ 
+if (FAILED(hres))
+{
+	ErrorMsg.Format(_T("Failed to create IWbemLocator object. Error code = %d"), hres);
+    CoUninitialize();
+    return ErrorMsg;                    // Program has failed.
+}</pre>
+
+<p>We connect to WMI with the locator pointer. </p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">IWbemServices *pSvc = NULL;
+	
+hres = pLoc-&gt;ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"), // Object path of WMI namespace
+        NULL,                    // User name. NULL = current user
+        NULL,                    // User password. NULL = current
+        0,                       // Locale. NULL indicates current
+        NULL,                    // Security flags.
+        0,                       // Authority (e.g. Kerberos)
+        0,                       // Context object 
+        &amp;pSvc                    // pointer to IWbemServices proxy
+        );
+    
+if (FAILED(hres)) {
+	ErrorMsg.Format(_T("Could not connect. Error code = %d"), hres);
+    pLoc-&gt;Release();     
+    CoUninitialize();
+    return ErrorMsg;                    // Program has failed.
+}</pre>
+<p>Let's set security level on the proxy.</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">hres = CoSetProxyBlanket(
+    pSvc,                        // Indicates the proxy to set
+    RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx
+    RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx
+    NULL,                        // Server principal name 
+    RPC_C_AUTHN_LEVEL_CALL,      // RPC_C_AUTHN_LEVEL_xxx 
+    RPC_C_IMP_LEVEL_IMPERSONATE, // RPC_C_IMP_LEVEL_xxx
+    NULL,                        // client identity
+    EOAC_NONE                    // proxy capabilities 
+);
+
+if (FAILED(hres))
+{
+	ErrorMsg.Format(_T("Could not set proxy blanket. Error code = %d"), hres);
+    pSvc-&gt;Release();
+    pLoc-&gt;Release();     
+    CoUninitialize();
+    return ErrorMsg;               // Program has failed.
+}</pre>
+
+<p>Now let's use the IWbemServices pointer to make queries on WMI objects.</p>
+
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">IEnumWbemClassObject* pEnumerator = NULL;
+hres = pSvc-&gt;ExecQuery(
+    bstr_t("WQL"), 
+    bstr_t("SELECT * FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = 'TRUE'"),	//bstr_t("SELECT * FROM Win32_NetworkAdapterConfiguration"),
+    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, 
+    NULL,
+    &amp;pEnumerator);
+    
+if (FAILED(hres))
+{
+	ErrorMsg.Format(_T("Query for operating system name failed. Error code = %d"), hres);
+    pSvc-&gt;Release();
+    pLoc-&gt;Release();
+    CoUninitialize();
+    return ErrorMsg;               // Program has failed.
+}</pre>
+
+<p>We use the Enumerator to retrieve properties of COM object. In the Enumeration loop everytime we advance the object pointer to the next object. When there is no one next we exit the loop.</p>
+
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">IWbemClassObject *pclsObj;
+ULONG uReturn = 0;
+   
+while (pEnumerator)
+{
+    HRESULT hr = pEnumerator-&gt;Next(WBEM_INFINITE, 1, 
+        &amp;pclsObj, &amp;uReturn);
+
+    if(0 == uReturn) break;</pre>
+
+<p>We want to get default gateway IP addresses for Network adapters where IPEnabled is true. So we check the IPEnabled property of the object first.</p>
+
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">VARIANT vtProp;
+BSTR* pbstr = NULL;
+hr = pclsObj-&gt;Get(L"IPEnabled", 0, &amp;vtProp, 0, 0);</pre>
+
+<p>As IPEnabled is a bool type checking vtProp.boolVal we get whether IPEnabled or not.</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">if(vtProp.boolVal) {
+	// Code
+}</pre>
+<h3>Accessing String Array Elements of COM Objects</h3>
+<p>After IPEnabled is ensured we want to get the default gateway. But DefaultIPGateway property is an array of string. So we need to check this before performing anything else. And then we get lower and upper bounds of the array. Subtracting the difference we get the number of elements. We need only need the first index as first index is the ipv4 address. So here goes the code:</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">SAFEARRAY *psa;
+// Get the value of the DefaultIPGateway property
+hr = pclsObj-&gt;Get(L"DefaultIPGateway", 0, &amp;vtProp, 0, 0);
+
+if (vtProp.vt == (VT_ARRAY|VT_BSTR)) {
+	psa = vtProp.parray;
+	// Get the lower and upper bound
+	hr = SafeArrayGetLBound( psa, 1, &amp;lLBound );
+	if(FAILED(hr)) {
+		ErrorMsg.Format(_T("Failed to get LBound"), hres);
+		return ErrorMsg;
+	}
+
+	hr = SafeArrayGetUBound( psa, 1, &amp;lUBound );
+	if(FAILED(hr)) {
+		ErrorMsg.Format(_T("Failed to get UBound"), hres);
+		return ErrorMsg;
+	}
+
+	hr = SafeArrayAccessData(psa, (void HUGEP**)&amp;pbstr);
+	if(FAILED(hr)) {
+		ErrorMsg.Format(_T("Failed to access buffer for Default GW"), hres);
+		return ErrorMsg;
+	}
+
+	cElements = lUBound-lLBound+1;
+	if (cElements &gt; 0)
+		defaultGatewayIpv4 = pbstr[0];
+	hr = SafeArrayUnaccessData(psa); 
+	if(FAILED(hr)) {
+		ErrorMsg.Format(_T("Failed SafeArrayUnaccessData"), hres);
+		return ErrorMsg;
+	}
+}</pre>
+<p>And then we release safearray,</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">hr = SafeArrayUnaccessData(psa); 
+if(FAILED(hr)) {
+	ErrorMsg.Format(_T("Failed SafeArrayUnaccessData"), hres);
+	return ErrorMsg;
+}</pre>
+<p>At the end of enumeration loop we clear the variant and release IWbemClassObject.</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">VariantClear(&amp;vtProp);
+pclsObj-&gt;Release();</pre>
+<p>At the end of function we release other structures and return the error message string:</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">pSvc-&gt;Release();
+pLoc-&gt;Release();
+pEnumerator-&gt;Release();
+CoUninitialize();
+return ErrorMsg;</pre>
+<p>That's about retrieving information using COM. You may need to include the following header files in your sourcecode to access COM objects and methods.</p>
+<pre class="brush: cpp; first-line: 1; tab-size: 5; toolbar: false; ">// For COM
+#define _WIN32_DCOM
+#include &lt;afxdisp.h&gt;			// for AfxThrowOleDispatchException
+#include &lt;comdef.h&gt;
+#include &lt;Wbemidl.h&gt;
+#pragma comment(lib, "wbemuuid.lib")</pre>
+<p style="text-align: left">You can get the complete function in my sourcecode file which is here: <span class="Apple-style-span" style="white-space: normal;"><a href="http://code.google.com/p/pingguin/source/browse/trunk/ProvideNetInfoDialog.cpp">http://code.google.com/p/pingguin/source/browse/trunk/ProvideNetInfoDialog.cpp</a></span></p>
+<p>You can look at the project which used this function: <span class="Apple-style-span" style="white-space: normal;"><a href="http://code.google.com/p/pingguin/">http://code.google.com/p/pingguin/</a>&nbsp;</span></p>
+<p style="text-align: left">Here is a good msdn reference which I followed:&nbsp;<a href="http://msdn.microsoft.com/en-us/library/aa390423(v=vs.85).aspx">http://msdn.microsoft.com/en-us/library/aa390423(v=vs.85).aspx</a>&nbsp;and may be of your use. Remember that code have a bug which is clarified on community content.</p>

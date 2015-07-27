@@ -1,0 +1,54 @@
+<p>If you were to give a lecture on "introduction to algorithms" how you would start! You can start with "I have no confidence in teaching anymore!" then, you produce all quality materials and finish with one of the best intro lectures of a kind! Pretty cool! Right?</p>
+
+<p>In this post, I'll be drawing some topics from that intro lecture I have attended recently,</p>
+<h3>Definition of algorithm</h3>
+<p>An algorithm is a well-defined computational procedure that takes some value or set of values as input, and produces a value or set of values as output. [<a href="#refer">3</a>]</p>
+
+<p>A definition of algorithm would be complete if it contains following,</p>
+
+<ul><li>a set of rules that precisely defines a sequence of operations [<a href="#refer">2</a>]</li>
+<li>finite number of steps</li>
+<li>it would stop eventually</li></ul></p>
+
+<p>The name algorithm is originated from the name of a Latin translation of a book written by al-Khwārizmī, a 9th century Persian mathematician. [<a href="#refer">2</a>]</p>
+
+<p>Desirable properites of algorithms are
+<ul>
+<li>Correctness: An algorithm is said to be correct if, for every input instance, it halts with the correct output.</li>
+<li>Efficiency: Efficiency is easily achievable if we give up on correctness.</li></ul></p>
+
+<h3>Correctness and Efficiency</h3>
+<p>Surprisingly, sometimes incorrect algorithms can also be useful if we can control the error rate. For example,
+<ul><li>Randomized algorithms: <a href="http://amstat.tandfonline.com/doi/pdf/10.1080/01621459.1949.10483310#.VM__EdXF92J">Monte Carlo</a> is always efficient but sometimes incorrect, <a href="http://en.wikipedia.org/wiki/Las_Vegas_algorithm">Las Vegas</a>: always correct but sometimes inefficient</li>
+<li>Approximation algorithms are always incorrect</li></ul></p>
+
+<p>Some measures of efficiency
+<ul><li>time complexity</li>
+<li>space complexity: main memory and virtual memory limit</li>
+<li>cache complexity: several levels of cache</li>
+<li>I/O complexity: swap between main memory and disk</li>
+<li>energy usage</li>
+<li>number of processors/cores used</li>
+<li>network bandwidth</li></ul></p>
+
+<h3>Performance bounds</h3>
+<p>
+<ol><li>worst-case complexity: maximum complexity over all inputs of a given size</li>
+<li>average complexity: average complexity over all inputs of a given size</li>
+<li>amortized complexity: worst-case bound on a sequence of operations</li>
+<li>expected complexity: for algorithms that make random choices during execution ( randomized algorithms )</li>
+<li>high-probability bound: when the probability that the complexity holds is &ge; 1 - c &frasl; n<sup>&alpha;</sup> for input size n, positive constant c, and some constant &alpha; &ge; 1</li></ol></p>
+<p>Points to be noted here,
+<ul><li>Worst-case complexity is the maximum amount taken by an algorithm.<br />Amortized analysis takes into account all of the operations of the algorithm.
+For example, consider the well known C++ data structure <a href="http://www.cplusplus.com/reference/vector/vector/">vector</a>. Every times, an insertion takes place when array is full it has to reallocate space for the array to double-size. It seems like for n insertions it might take take a lot of time. But, amortized analysis says that for n insertions complexity is it still O(n). A nice explanation is here [<a href="#refer">4</a>]</li>
+<li>High performance bound of quick sort is nlogn.</li></ul>
+
+<br />
+<a name="refer" style="color: #cc6600""><h4>References</h4></a>
+<ol><li><a href="http://www3.cs.stonybrook.edu/~rezaul/">Rezaul Chowdhury - CS StonyBrook</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Algorithm">wikipedia - Algorithm</a></li>
+<li><a href="http://mitpress.mit.edu/books/introduction-algorithms">Thomas H. Cormen - Introduction to Algorithms</a></li>
+<li><a href="http://www.cs.cornell.edu/Courses/cs3110/2011sp/lectures/lec20-amortized/amortized.htm">Lecture 20: Amortized Analysis</a></li></ol>
+
+<br />
+<p>Commit (r11): February 02, 2015</p>

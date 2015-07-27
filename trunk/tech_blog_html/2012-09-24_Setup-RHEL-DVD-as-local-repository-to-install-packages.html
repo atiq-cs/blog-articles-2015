@@ -1,0 +1,33 @@
+<h3>Using a RHEL/Cent-OS/Fedora DVD</h3>
+<p>Though updating through Redhat Channel using yum is the best way to update and install packages on RHEL System there may be necessities sometimes for installing packages using RHEL DVD. It can come as handy even when there is internet configuration problem or in case of other failures. The procedure to setup a local repository is simple. First, you have to insert the RHEL DVD into the DVD drive. DVD will be mounted in GUI in a while. Then, you have to apply this command to see in which location it is mounted,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;"># ls /media/
+RHEL_6.2 x86_64\ Disc</pre>
+<p>The path is essential; it will be used to configure local repo.</p>
+<p>Now, create a repo file in /etc/yum.repos.d/. Change the base path with the directory path that you have got previously. For example, I have create this repo file with following contents,</p>
+<pre class="brush: plain; first-line: 1; tab-size: 5; toolbar: false;"># cat /etc/yum.repos.d/DVD.repo
+
+[RHEL-Local-Repository]
+name=RHEL Local Repository
+baseurl=file:///media/RHEL_6.2\ x86_64\ Disc/
+enabled=1
+gpgcheck=0</pre>
+<p>Now you can apply yum commands to modify package configurations of your system. For example, this command will list the available packages,</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;"># yum list</pre>
+<p>Information also applies to other yum based distributions like Fedora Core, Cent-OS etc.</p>
+
+<h3>Using RHEL DVD iso</h3>
+<p>For Fedora and Cent-OS, you must not think of this way unless you have some sort of problem with internet. For RHEL this might be very useful if you can spare several GBs of space of your Linux partition. First thing you have to do is: mount the iso and then copy all contents to local filesystem. Here are the commands (requires root access), assuming our iso file for RHEL 7 is rhel-7-server_x86_64.iso residing in <strong>/home/User</strong></p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;"># mount -o loop /home/User/rhel-7-server_x86_64.iso /mnt
+# cp -rfv /mnt /root/DVD_Media_RHEL_7Server_x86_64/
+# umount /mnt</pre>
+<p>We just created local RHEL repository. However, we need to create a repo file in the system to ensure it is used by the system.</p>
+<pre class="brush: bash; first-line: 1; tab-size: 5; toolbar: false;">vi /etc/yum.repos.d/RHEL-DVD-Local.repo</pre>
+<p>Add following contents to the file using vi editor:</p>
+<pre class="brush: plain; first-line: 1; tab-size: 5; toolbar: false;">[RHEL-Local-Repository]
+name=RHEL Local Repository
+baseurl=file:///root/DVD_Media_RHEL_7Server_x86_64/
+enabled=1
+gpgcheck=0</pre>
+
+<h3>Related Links:</h3>
+<p><a href="https://access.redhat.com/knowledge/solutions/7227">How do I configure a yum local repository to be able to access a DVD ISO via HTTP on Red Hat Enterprise Linux?</a></p>
