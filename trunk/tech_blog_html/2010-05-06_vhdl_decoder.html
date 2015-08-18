@@ -1,5 +1,6 @@
 <p>To design a 2 to 4 Decoder only using Behavioral VHDL we need to define input port and output ports. Afterwards, we need to define the logic for them in architecture. The code looks like below,</p>
 <script src="https://gist.github.com/atiq-cs/f2a9c18ca11514a35f20.js"></script>
-<p>We use our design for 2 to 4 to build 3 to 8 decoder (using structural HDL). We reuse the component decoder2to4 here.</p>
-<script src="https://gist.github.com/atiq-cs/f2a9c18ca11514a35f20.js"></script>
+<p>We use our design for 2 to 4 to build 3 to 8 decoder (using structural HDL). We reuse the component decoder2to4 and define logical functions to derive 3to4 decoder from 2 to 4. Depending on the logical relation among output ports and input you are welcome to draw a diagram.
 
+The code looks as below,</p>
+<script src="https://gist.github.com/atiq-cs/b596a2fb5abcbb407b96.js"></script>
