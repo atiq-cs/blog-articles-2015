@@ -1,44 +1,55 @@
 <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML">
 </script>
+<h3>What is the use of series?</h3>
 <p>
-Taylor series of a real or complex-valued function \(ƒ(x)\) is,
-\begin{align} f(a) + \frac{f\prime(a)}{1!}(x-a) + \frac{f\prime\prime(a)}{2!}(x-a)^2 + \frac{f\prime\prime\prime(a)}{3!}(x-a)^3 + \cdots \end{align}
-Another form that has to be verified,
-\begin{align} f(x + h) = f(x) + h f^{\prime}(x) + (h^2/2!) f^{\prime \prime}(x + \theta h) \end{align}
+Let's say you have a large number of consecutive integer numbers. You need to sum them. These number might represent incremental amount of money. For one million numbers it takes significant amount of time for computing the sum. However, if we know the formula for summing those consecutive numbers solution becomes easier. We can even write a program for computer. The computer can now compute the sum in constant time where a naive solution would be inefficient and would take more computing time. This is a narrow example how study of math series might help us to solve complex computer science problems. A more useful example will be use of discrete furier series which have made image applications faster.</p>
 
-Maclaurin series is special case of Taylor series.
+<h4>Taylor series</h4>
+<p>Taylor series is one of the most important series. To note some interesting points about this series,
+<ul><li>This series can help deriving many other series in use real life for example, \(e^x\), \(\log(1-x)\), binomial series, trigonometric function but not limited to these.</li>
+<li>Maclaurin series is a special case of Taylor series.</li>
+<li>Taylor series of a real or complex-valued function \(ƒ(x)\) is,
+\begin{align} f(a) + \frac{f\prime(a)}{1!}(x-a) + \frac{f\prime\prime(a)}{2!}(x-a)^2 + \frac{f\prime\prime\prime(a)}{3!}(x-a)^3 + \cdots \end{align}</li>
+<li>Another form that has to be verified,
+\begin{align} f(x + h) = f(x) + h f^{\prime}(x) + (h^2/2!) f^{\prime \prime}(x + \theta h) \end{align}</li>
+
+<li>Maclaurin series is special case of Taylor series.
 
 Maclaurin series expansion for the function \(e^x\) is given by,
-\begin{align} e^x = 1 + x + \frac{x^2}{2} + \frac{x^3}{6} + \frac{x^4}{24} + \cdots = \sum_{n\geq 0} \frac{x^n}{n!} \end{align}
-Substituting \(x = 1\), in the above series we get,
+\begin{align} e^x = 1 + x + \frac{x^2}{2} + \frac{x^3}{6} + \frac{x^4}{24} + \cdots = \sum_{n\geq 0} \frac{x^n}{n!} \end{align}</li>
+<li>Substituting \(x = 1\), in the above series we get,
 \begin{align} e = 1 + 1 + \frac{1}{2} + \frac{1}{6} + \frac{1}{24} + \cdots = \sum_{n\geq 0} \frac{1}{n!} \end{align}
-This is one of the many examples where the definition  \(0! = 1\) makes sense.
+</li></ul>
+</p>
+<h4>Harmonic series</h4>
+<p>The series is sum of infinite terms,
+\begin{align} \sum_{n=1}^{\infty}\frac{1}{n} = 1 + \frac{1}{2} + \frac{1}{3} + \frac{1}{4} + \frac{1}{5} + \cdots \end{align}
 
-Math formulas
-When \(a \ne 0\), there are two solutions to \(ax^2 + bx + c = 0\) and they are
-$$x = {-b \pm \sqrt{b^2-4ac} \over 2a}.$$
-
-Harmonic series
-comes from the harmony of music
-
+Following interesting points can be noted,
+<ul><li>It is related to harmony of music.</li>
+<li>The nth partial sum of the diverging harmonic series is called the n-th harmonic number,
+\begin{align} H_n =  \sum_{k=1}^{n}\frac{1}{k} \end{align}
+</li>
+<li>No harmonic numbers are integers, except for \(n = 1\).</li>
+<li>Partial sums of harmonic series have logarithmic growth. Therefore, relation between harmonic number and logarithm is followed,
+\begin{align} H_n =  \ln{(k)} + \lambda + \epsilon_k \end{align}
+There is a programming problem related to this. You can try to solve it using harmonic series if you are interested.
+</li>
+<li>The difference between the nth harmonic number and the natural logarithm of n converges to the Euler–Mascheroni constant.</li>
+</ul>
+</p>
+<p>
 (1-x)^x required
 
 <br></p>
+references
+Series Expansion
+http://mathworld.wolfram.com/SeriesExpansion.html
 
-4:18 PM
-be ready at 3:10 PM
+Generalized Taylor series approximation - Khan Academy
+https://www.khanacademy.org/math/integral-calculus/sequences_series_approx_calc/taylor-series/v/generalized-taylor-series-approximation
 
-Interns at the United Nations Headquarters Secretariat are not paid. All costs of travel and accommodation, including living expenses, must be covered by the intern or any relevant sponsoring institution. Please see the Internship Programme website for more information on living expense estimates for New York. Please visit the UN Internship Program website for more information.
+Taylor Series -- from Wolfram MathWorld
+http://mathworld.wolfram.com/TaylorSeries.html
 
-Dear Ms. Tina Friis Hansen
-
-House -8, Road-14, Block-L, South Banasree, Rampura, Dhaka - 1219
-, CS Grad-Student at Stony Brook University
-
-I have gained useful insight into Computer Science studying at Stony Brook University.
-
-Hi,
-I got internship from UN. I need some information. Please reply. thanks.
-
-- Atiqur Rahman,
-Stony Brook University
+https://en.wikipedia.org/wiki/Harmonic_series_(mathematics)
