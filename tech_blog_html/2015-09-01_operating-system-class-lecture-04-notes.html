@@ -1,0 +1,168 @@
+<p id="image"><a href="/image.axd?picture=%2f2014%2f03%2fsample+code.jpg" title="Operating System Layers figure - wiki"><img src="/image.axd?picture=%2f2015%2f09%2fOperating_system_placement.png" width="300" alt="Operating System Layers figure - wiki"></a><br />Figure 1: wikipedia - OS</p>
+
+<p>This article recalls some fundamental ideas of computer operating system. There was a quiz presented to all students for participation during first class. Now, the professor is discussing questions from that quiz,</p>
+<ol><li><h4>Figure out bugs of the following code</h4> (continuing from previous lecture),
+<pre class="brush: c; toolbar: false;">#define MAX 1024
+int process_id_list[MAX];
+
+int get_new_process_id() {
+    int i;
+    
+    for (i=0; i&lt;=MAX; i++) {
+        if (process_id_list[i] = 0) {            
+            return (i);
+        
+    }}
+}</pre>
+
+There are several problems with this code, those are commented in the code segments below,
+
+<pre class="brush: c; toolbar: false;">static int process_id_list[MAX];   // need initialization before use
+
+for (i=0; i&lt;=MAX; i++) {    // Buffer overflow
+    if (process_id[i] = 0) {        // assignment operator instead of comparison    
+        return (i);
+    
+}}                          // readability
+</pre>
+
+After fixing those issues code looks like,
+<pre class="brush: c; toolbar: false;">#define MAX 1024
+static int process_id_list[MAX];        // This is the fix accepted by professor
+// however, if it's global array C initializes that too regardless of the static
+// therefore static is not required to solve this problem
+// Current standard of C is C11 replacing previous standards C99
+// ref: https://en.wikipedia.org/wiki/C11_(C_standard_revision)
+
+int get_new_process_id() {
+    int i;
+    
+    for (i=0; i&lt;MAX; i++) {
+        if (process_id_list[i] == 0) {
+            return (i);
+        }
+    }
+    // should return something when no free process id is found
+}
+</pre>
+
+We need some sort of synchronization to accsss shared data structure. We need to ensure that read/write of <i>process_id_list</i> is thread safe. As per lock semantics here is a way to achieve this,
+
+<pre class="brush: c; toolbar: false;">#define MAX 1024
+static int process_id_list[MAX];
+
+int get_new_process_id() {
+    int i;
+
+    lock();
+    for (i=0; i&lt;MAX; i++) {
+        if (process_id_list[i] == 0) {
+            return (i);
+            unlock();
+        }
+    }
+    unlock();
+    return -1;  // caller is responsible for handling this
+}</pre>
+
+<b>What are some architecture support for implementing locks?</b>
+<ul>
+<li>CS (compare and swap)</li>
+<li>Test and Set conditions</li>
+</ul>
+
+<b>While changing code when you are working on OS level make as small change on code as possible to existing working code as possible. Why?</b>
+<ul>
+<li>If amount of change is small it is easier to find problems lying in the code.</li>
+<li>It is easier to debug and find problems if change is small.</li>
+</ul>
+
+Still there are some problems with this code. There is a problem with efficiency in previously illustrated code. To get a new process id, everytime we are iterating a loop <i>MAX</i> number of times. We can save previously found index where last free process id was found and can start from the next index. What ia a way to achieve this with minimal changes?
+<br /><br />
+We can make the variable <i>i</i> static so it remembers last found index value,
+<pre class="brush: c; toolbar: false;">int get_new_process_id() {
+    static int i=0;
+
+    lock();
+    for (i=0; i&lt;MAX; i++) {
+        if (process_id_list[i] == 0) {
+            return (i);
+            unlock();
+        }
+    }
+    unlock();
+    return -1;
+}</pre>
+When value of <i>i</i> reaches MAX we need to start it back from index 0 as process ids might become free in the beginning indices.
+<pre class="brush: c; toolbar: false;">int get_new_process_id() {
+    static int i=0;
+
+    lock();
+    if (i==MAX-1) i = 0;
+    for (i=0; i&lt;MAX; i++) {
+        if (process_id_list[i] == 0) {
+            return (i);
+            unlock();
+        }
+    }
+    unlock();
+    return -1;
+}</pre>
+Let us move to next question.
+</li>
+<li><h4>What is an elevator algorithm?</h4>
+It is a disk access algorithm. I/O scheduling algorithm.
+ - sort disk sectors in up/down order as disk head moves across platter, to avoid random seeks
+</li>
+
+<li><h4>What do you understand by Ready and Running state of a process?</h4>
+Among primary process states these are,
+<ul>
+<li>Ready State: Process is loaded into memory. However, it is waiting for CPU cycle. Waiting state is similarly loaded into memory, however, in this state processor is waiting for I/O to complete.</li>
+<li>Running State: Process is executing on CPU.</li>
+</ul>
+</li>
+
+<li><h4>What is an inode, list at least 3 information it contains?</h4>
+inode is meta data for file system objects, it contains following information,
+<ul>
+<li>number</li>
+<li>timestamp</li>
+<li>permissions</li>
+<li>uid/gid</li>
+<li>type</li>
+<li>name? - not really! will discuss more on this later</li>
+</ul>
+</li>
+<li><h4>What is MMU?</h4>
+MMMU is memory management Unit, some primary functions are,
+<ul>
+<li>Physical vs virtual memory mapping</li>
+<li>Memory protection on pages (those segmentation faults we were getting are relevant..)</li>
+</ul>
+</li>
+<li><h4>Buffer Cache and Page cache</h4></li>
+In the past, page buffer and page caches used to be separate. But today, those caches are merged and usually referred as page cache. In the former context, they mean following,
+<ul>
+<li>Caches data (sectors) from disks in memory</li>
+<li>Page cache: caches code (TEXT) segment, data/heap, stack segments</li>
+</ul>
+When we run out of space we in main memory we move them to swap partition or virtual memory (pagefile.sys in Windows).
+<li><h4>Context Switch</h4>
+Running one program and need to switch to another program, moving between user and kernel modes. Avoid too many CSs (Context Switch).
+</li>
+<li><h4>System Call</h4>
+System Call is how programs ask OS for a service. It is better to avoid too many system calls and get the job done with fewer system calls whenever possible. It is not that the case that system calls execute slower in the CPU but the initial procedure of system call is an overhead.
+</li>
+</ol>
+<br/ >
+<p><font color="red">Disclaimer:</font> author of the article is responbile for opinions. The school and the faculty are not affiliated.</p>
+<h4>References</h4>
+<ul><li><a href="http://www3.cs.stonybrook.edu/~ezk/cse506-f15/">sbucs - cse506-f15</a></li>
+<li><a href="https://en.wikipedia.org/wiki/C11_(C_standard_revision)">wikipedia - C11</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Process_state#Primary_process_states">wikipedia - Primary_process_states</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Page_cache">wikipedia - Page cache</a></li>
+<li><a href="https://en.wikipedia.org/wiki/System_call">wikipedia - System_call</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Inode">wikipedia - inode</a></li></ul>
+
+<p>Commit (r1): September 02, 2015 </p>
