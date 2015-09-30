@@ -15,51 +15,27 @@
 <li><a href="http://dl.acm.org/citation.cfm?id=2145361">Tie strength in question & answer on social network sites</a>, 2012 mentions that Recent work by Gilbert and Karahalios [10] looked at Granovetter's denotation of strong and weak ties within real-life offline social networks and found a series of features (number of mutual friends, number of words exchanged, and so on) that can effectively predict tie strength between friends in an online social network. Granovetter highlighted the role of tie strength in information exchange between people, and as such, models of tie strength online can help us to understand the exchange of information through questions and answers online. We build upon their algorithm in our work looking at what kinds of friends provide valuable answers to questions on SNS.</li>
 </ul>
 
-<p>A definition of algorithm would be complete if it contains following,</p>
+<p>We wrote a critique on the paper. I am attaching it here if comes useful,</p>
 
-<ul><li>a set of rules that precisely defines a sequence of operations [<a href="#refer">2</a>]</li>
-<li>finite number of steps</li>
-<li>it would stop eventually</li></ul></p>
+<h3>Critique on <i>Predicting Tie Strength with Social Media</i></h3>
+<h4>Introduction</h4>
+<p align="justify">"Predicting tie strength with social media" analyzes social media data to predict tie strength leveraging exploration of theory of tie strength in the light of social science. Mark S. Granovetter laid out the foundation on network analysis with strong and weak ties. Especially he documented the usefulness of weak ties and how information diffusion works with the help of such ties in a network. He also proposed four dimensions of tie strength. However, other works have shown 3 more dimensions: network structure, emotional support and social distance which have impact on tie strength. Based on these seven dimensions Eric Gilbert and Karrie Karahalios derive predictive variables from major dimensions around facebook data and applies statistical methods. Their method achieves 87.2% accuracy. They elaborated cases with interviews where their method failed.</p>
 
-<p>The name algorithm is originated from the name of a Latin translation of a book written by al-Khwārizmī, a 9th century Persian mathematician. [<a href="#refer">2</a>]</p>
+<h4>Critique</h4>
+<p align="justify">Their work is novel in that they set a milestone in predicting tie strength using real social media data. However, their method is not generic, their framework for predicting tie strength might not move beyond facebook without considerable modification and redesign. Though facebook has wider attraction to mass people, there are other potential networks such as professional network on LinkedIn, enterprise network on yammer, academic network on academia.edu and so on. They have variations on structure of network, and requirement of different variable. For example, photo sharing, wall etc features might not be available, additionally, there will be other features such as recommendations from colleagues, there can be co-authors in an article or there can be citation to other articles and works. They did a good job performing practical analysis based on the fundamental theories of sociology. However, as Mark Granovetter said socio-metry or network analysis has almost always been peripheral. Similarly, this work is limited to tie strength and does not provide useful insight into other parts of network such as bridges.</p>
 
-<p>Desirable properites of algorithms are
-<ul>
-<li>Correctness: An algorithm is said to be correct if, for every input instance, it halts with the correct output.</li>
-<li>Efficiency: Efficiency is easily achievable if we give up on correctness.</li></ul></p>
+<p align="justify">Their work has been limited to exploring around strong and weak ties with a 10 point resolution. There are special types of ties which can be labeled as romantic tie, professor-student tie, advisor-advisee tie, virtual ties (such in online gaming, online dating etc). Trying to label these special ties would provide us with useful insights. However, size of dataset used in their work is small for such analysis where subjects are not from diverse backgrounds. It is possible that snapshot of real world dataset contains wider variations which require different set of variables to measure tie strength. It is also possible that the variables that did not have impact on tie strength on their work at all will show influence in an arrangement that satisfy these conditions of diverse background and variation in network structure. The participants of the project were mostly from similar background. Total number of people in dataset is 35 who share one or more social foci. This small number of people in the dataset do not represent a wider population. They do not introduce much of diversity. There is chance of a number of unexplored variables that might have impact on tie strength. Range for educational difference should be changed for real world data set which had a short scope for the population of participants from University of Illinois.</p>
 
-<h3>Correctness and Efficiency</h3>
-<p>Surprisingly, sometimes incorrect algorithms can also be useful if we can control the error rate. For example,
-<ul><li>Randomized algorithms: <a href="http://amstat.tandfonline.com/doi/pdf/10.1080/01621459.1949.10483310#.VM__EdXF92J">Monte Carlo</a> is always efficient but sometimes incorrect, <a href="http://en.wikipedia.org/wiki/Las_Vegas_algorithm">Las Vegas</a>: always correct but sometimes inefficient</li>
-<li>Approximation algorithms are always incorrect</li></ul></p>
-
-<p>Some measures of efficiency
-<ul><li>time complexity</li>
-<li>space complexity: main memory and virtual memory limit</li>
-<li>cache complexity: several levels of cache</li>
-<li>I/O complexity: swap between main memory and disk</li>
-<li>energy usage</li>
-<li>number of processors/cores used</li>
-<li>network bandwidth</li></ul></p>
-
-<h3>Performance bounds</h3>
-<p>
-<ol><li>worst-case complexity: maximum complexity over all inputs of a given size</li>
-<li>average complexity: average complexity over all inputs of a given size</li>
-<li>amortized complexity: worst-case bound on a sequence of operations</li>
-<li>expected complexity: for algorithms that make random choices during execution ( randomized algorithms )</li>
-<li>high-probability bound: when the probability that the complexity holds is &ge; 1 - c &frasl; n<sup>&alpha;</sup> for input size n, positive constant c, and some constant &alpha; &ge; 1</li></ol></p>
-<p>Points to be noted here,
-<ul><li>Worst-case complexity is the maximum amount taken by an algorithm.<br />Amortized analysis takes into account all of the operations of the algorithm.
-For example, consider the well known C++ data structure <a href="http://www.cplusplus.com/reference/vector/vector/">vector</a>. Every times, an insertion takes place when array is full it has to reallocate space for the array to double-size. It seems like for n insertions it might take take a lot of time. But, amortized analysis says that for n insertions complexity is it still O(n). A nice explanation is here [<a href="#refer">4</a>]</li>
-<li>High performance bound of quick sort is nlogn.</li></ul>
+<p align="justify">Social media data was ensembled with ties that weren't properly detected by measuring variables around seven dimensions as found in error analysis interviews. To detect such ties we need learning mechanism that can learn from variations of the network structure and communications. Moreover, to measure intimacy two predictive variables have been defined: wall intimacy words and inbox intimacy words which use linguistic inquiry and word count dictionary. However, research in limited settings does not make LIWC method perfect yet. Therefore, additional details are required to evaluate the impact of intimacy variables. Other than these shortcomings the paper has successfully evaluated a mechanism to evaluate tie strength using social media data, tie strength being investigated as theory of sociology for a long time.</p>
 
 <br />
+<b>Acknowledgement:</b> Srikant Aggarwal, Fall 2014 Student, Stony Brook University and Dr. Jie Gao, Associate Professor, Stony Brook University
+<br />
+
 <a name="refer" style="color: #cc6600""><h4>References</h4></a>
-<ol><li><a href="http://www3.cs.stonybrook.edu/~rezaul/">Rezaul Chowdhury - CS StonyBrook</a></li>
-<li><a href="http://en.wikipedia.org/wiki/Algorithm">wikipedia - Algorithm</a></li>
-<li><a href="http://mitpress.mit.edu/books/introduction-algorithms">Thomas H. Cormen - Introduction to Algorithms</a></li>
-<li><a href="http://www.cs.cornell.edu/Courses/cs3110/2011sp/lectures/lec20-amortized/amortized.htm">Lecture 20: Amortized Analysis</a></li></ol>
+<ol><li><a href="http://dl.acm.org/citation.cfm?id=1518736">Paper - Predicting tie strength with social media</a></li>
+<li><a href="http://www.jstor.org/stable/2776392?seq=1#page_scan_tab_contents">American Journal of Sociology  Vol. 78, No. 6, May, 1973 - The Strength of Weak Ties</a></li>
+<li><a href="https://sites.google.com/site/cse592spring14/">spring 2014 - Social Networks</a></li>
 
 <br />
-<p>Commit (r11): February 02, 2015</p>
+<p>Commit (r01): Sept 30, 2015</p>
