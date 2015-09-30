@@ -67,7 +67,7 @@
 
 <p><img src="Despicable_Me2_screenshot_plugin_running.png" /></p>
 
-<p>This article discusses implementation, logic, source code and building procedure of a Subtitle Plug-in for Windows Media Player. If you are interested in understanding the source-code you can go through the code related discussions. Otherwise, to install this plugin you can skip to the section, <a href="#heading11">Installing Plug-in without building from Code</a>. Updated source-code of the project is available at <a href="https://code.google.com/p/wmp-native-subtitle-plugin/source/browse/">Google Code</a></p>
+<p>This article discusses implementation, logic, source code and building procedure of a Subtitle Plug-in for Windows Media Player. If you are interested in understanding the source-code you can go through the code related discussions. Otherwise, to install this plugin you can skip to the section, <a href="#heading11">Installing Plug-in without building from Code</a>. Updated source-code of the project is available at <a href="https://github.com/atiq-cs/wmp-native-subtitle-plugin">Google Code</a></p>
 
 <h3><a id="heading0001" name="heading0001">The Problem</a></h3>
 
@@ -777,7 +777,7 @@ void SubToSAMIConverter::EmbedUnicodeSymbols(LPWSTR pSubStr, LPWSTR pLine) {
 
 <ul>
 	<li>Using the download link from the top of the article page - after downloading extract the zip archive</li>
-	<li><strong>Using code.google.com:</strong> Project is located at <a href="http://code.google.com/p/wmp-native-subtitle-plugin/">http://code.google.com/p/wmp-native-subtitle-plugin/</a>. For updated source code you can checkout source following instructions at: <a href="http://code.google.com/p/wmp-native-subtitle-plugin/source/checkout">http://code.google.com/p/wmp-native-subtitle-plugin/source/checkout</a></li>
+	<li><strong>Using github:</strong> Project is located at <a href="https://github.com/atiq-cs/wmp-native-subtitle-plugin">https://github.com/atiq-cs/wmp-native-subtitle-plugin</a>. For updated source code you can checkout source following instructions at: <a href="https://github.com/atiq-cs/wmp-native-subtitle-plugin">https://github.com/atiq-cs/wmp-native-subtitle-plugin</a></li>
 </ul>
 
 <h4><a id="heading0902" name="heading0902">64 bit builds</a></h4>
@@ -797,7 +797,7 @@ regsvr32 &quot;F:\Sourcecodes\Plugin-App\WMPNativeSubtitle\x64\Release\WMPNative
 
 <h4><a id="heading0903" name="heading0903">32 bit builds</a></h4>
 
-<p>Instructions for 32 builds are almost same as for 64 bit builds. Except, if you download source attached zip you must download the one mentioning x86. Note, if you acquire the source using code.google.com&#39;s project page you will find that there are two directories containing Visual Studio Project configuration files: one name x64 and other one is x86. x86 directory contains Visual Studio solution and project files for 32 bit. Copy this files and overwrite files in x64 which give you required files for 32 bit build.</p>
+<p>Instructions for 32 builds are almost same as for 64 bit builds. Except, if you download source attached zip you must download the one mentioning x86. Note, if you acquire the source using github.com&#39;s project page you will find that there are two directories containing Visual Studio Project configuration files: one name x64 and other one is x86. x86 directory contains Visual Studio solution and project files for 32 bit. Copy this files and overwrite files in x64 which give you required files for 32 bit build.</p>
 
 <p>After building dll from the code use regsvr32 command to register the dll. regsvr32 works for 32 bit dlls as well. Hence, registering the dll will be an easy work of apply a command with privilege elevated.</p>
 
