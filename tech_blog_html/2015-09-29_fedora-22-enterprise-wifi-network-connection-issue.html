@@ -1,0 +1,114 @@
+<p>A common problem we face with some Linux distributions is to connect with WiFi network. This can be frustrating. If the user is not tech savvy they might even decide to give up the Linux distribution. However, the problems I faced are particularly related with PEAP WPA Enterprise WiFi network. What happens is that many schools and company uses this sort of authentication in WiFi to authenticate users. Say for example, you use WolfieNet-Secure at Stony Brook Security. You use your netid and password to connect to the network. In Windows and tablets, cellphones in such platforms you will see connection is working just fine. However, some of the Linux distributions have issues such as Fedora. In this article, I will discuss how to solve WiFi authentication with PEAP WPA Enterprise network on Fedora 22. I solved the problem in Linux Mint as well which I will discuss in another post.</p>
+<h3>Debugging Wireless Network Issues</h3>
+<ul><li>General error messages usually appear in /var/log/messages. Sometimes, the file might contain some error log related to network as well.</li>
+<li>nmcli can be useful when you need to solve the problem using terminal (without GUI).</li>
+<li>There are some alternatives of NetworkManager (is defaut network connectivity manager in Fedora/RHEL etc systems) which sometimes might be useful if you are sure that the problem specifically lies in Network Manager package.</li>
+<li>Additionally, you can have a look at the network scripts located at "/etc/sysconfig/network-scripts/"</li>
+<li>A package that is essentially related with WiFi is wpa-supplicant. wpa-supplicant is the IEEE 802.11 (Wireless LAN, WiFI) implementation for Linux. When authentication for WiFi is failing looking at its log we find,</li></ul>
+<pre class="bash: bash;"># tail -n 20 /var/log/wpa_supplicant.log
+wlp2s0: CTRL-EVENT-DISCONNECTED bssid=94:b4:0f:ab:85:f0 reason=3 locally_generated=1
+wlp2s0: SME: Trying to authenticate with 94:b4:0f:ab:85:f0 (SSID='cs_secure' freq=5805 MHz)
+wlp2s0: Trying to associate with 94:b4:0f:ab:85:f0 (SSID='cs_secure' freq=5805 MHz)
+wlp2s0: Associated with 94:b4:0f:ab:85:f0
+wlp2s0: CTRL-EVENT-EAP-STARTED EAP authentication started
+wlp2s0: CTRL-EVENT-EAP-PROPOSED-METHOD vendor=0 method=25
+wlp2s0: CTRL-EVENT-EAP-METHOD EAP vendor 0 method 25 (PEAP) selected
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=3 subject='/C=SE/O=AddTrust AB/OU=AddTrust External TTP Network/CN=AddTrust External CA Root' hash=687fa451382278fff0c8b11f8d43d576671c6eb2bceab413fb83d965d06d2ff2
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=3 subject='/C=SE/O=AddTrust AB/OU=AddTrust External TTP Network/CN=AddTrust External CA Root' hash=687fa451382278fff0c8b11f8d43d576671c6eb2bceab413fb83d965d06d2ff2
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=2 subject='/C=US/ST=New Jersey/L=Jersey City/O=The USERTRUST Network/CN=USERTrust RSA Certification Authority' hash=1a5174980a294a528a110726d5855650266c48d9883bea692b67b6d726da98c5
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=1 subject='/C=US/ST=MI/L=Ann Arbor/O=Internet2/OU=InCommon/CN=InCommon RSA Server CA' hash=0a05c462756390dd1f1d5dd82794c300f04be789dce76d7e312f790d68fd385a
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=0 subject='/C=US/postalCode=11794/ST=New York/L=Stony Brook/street=Computer Science Building/O=Stony Brook University/OU=Computer Science/CN=acpm.cs.stonybrook.edu' hash=95e078ed8a36ebe25aae857a03f36dc3c8cbb32a745394c24046486bf572b925
+wlp2s0: CTRL-EVENT-EAP-PEER-ALT depth=0 DNS:acpm.cs.stonybrook.edu
+EAP-MSCHAPV2: Authentication succeeded
+EAP-TLV: TLV Result - Success - EAP-TLV/Phase2 Completed
+wlp2s0: CTRL-EVENT-EAP-SUCCESS EAP authentication completed successfully
+nl80211: Unexpected encryption algorithm 5</pre>
+
+<p>I was still able to connect to guest wifi networks (which do not require user id/password). But I could not connect to secure wifi networks. I dug up a bit on the error several weeks ago and, to my surprise, looking at forums and message I realized that wpa_supplicant package has been updated on Linux distributions which broke the WiFi for enterprise network which are password protected. I left it to check later.</p>
+
+<p>However, today I found that there is a simple solution to this problem. If we carefully select options in the UI of network manager this solves the problem WiFi connection authentication phase completes successfully. There is no bug in wpa-supplicant that caused the problem actually. If you are facing similar issues you can try this approach. If you are using gnome-3 desktop manager (default for Fedora/RHEL) please click on the top-right corner of the desktop. You'll see a pop up menu like this,</p>
+<p id="image"><a href="/image.axd?picture=%2f2015%2f09%2fwifi_01_network-notification-tray.png" title="Click image to zoom"><img src="/image.axd?picture=%2f2015%2f09%2fwifi_01_network-notification-tray.png" alt="Fedora Desktop Task Panel" /></a></p>
+<p>From the menu we select "WiFi Settings". It create a dialog box for configuring network.</p>
+
+<p id="image"><a href="/image.axd?picture=%2f2015%2f09%2fwifi_02_network-settings.png" title="Click image to zoom"><img src="/image.axd?picture=%2f2015%2f09%2fwifi_02_network-settings.png" alt="Fedora Desktop Task Panel" /></a></p>
+<p>On the dialog we look at the WiFi connection (bss) that we are having trouble with. Here, for example, we have "WolfieNet-Secure". We click the settings icon of the entry. As we are connecting to this network for the first time (if this is not your first time, to fix the problem, you still have to go settings of the connection and click forget network using reset option) it shows us detail configuration options.</p>
+
+<p id="image"><a href="/image.axd?picture=%2f2015%2f09%2fwifi_03_wifi-auth.png" title="Click image to zoom"><img src="/image.axd?picture=%2f2015%2f09%2fwifi_03_wifi-auth.png" alt="Fedora Desktop Task Panel" /></a></p>
+
+<p>Only stupid part of this program is that it could not guess that thet network uses PEAP and that no CA certificate is usually required. So we follow the steps below,</p>
+<ul>
+<li>In Wifi Security please select "WPA and WPA2 Enterprise" if not selected.</li>
+<li>In authentication please select "Protected PEAP"</li>
+<li>Must select "No CA certificate is required". I guess previously I always ignored this option, was clueless that this is important.</li>
+<li>Please provide correct user name and password. Finally, click connect. That's it.</li></ul>
+
+<p>Connection will be successfully established. If we check wpa_supplicant we will find,</p>
+<pre class="brush: plain; toolbar: false;">wlp2s0: Trying to associate with 00:24:6c:31:b8:cb (SSID='WolfieNet-Secure' freq=5220 MHz)
+wlp2s0: Associated with 00:24:6c:31:b8:cb
+wlp2s0: CTRL-EVENT-EAP-STARTED EAP authentication started
+wlp2s0: CTRL-EVENT-EAP-PROPOSED-METHOD vendor=0 method=25
+wlp2s0: CTRL-EVENT-EAP-METHOD EAP vendor 0 method 25 (PEAP) selected
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=3 subject='/L=ValiCert Validation Network/O=ValiCert, Inc./OU=ValiCert Class 2 Policy Validation Authority/CN=http://www.valicert.com//emailAddress=info@valicert.com' hash=58d017279cd4dc63abddb196a6c9906c30c4e08783eae8c1609954d69355596b
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=3 subject='/L=ValiCert Validation Network/O=ValiCert, Inc./OU=ValiCert Class 2 Policy Validation Authority/CN=http://www.valicert.com//emailAddress=info@valicert.com' hash=58d017279cd4dc63abddb196a6c9906c30c4e08783eae8c1609954d69355596b
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=2 subject='/C=US/O=The Go Daddy Group, Inc./OU=Go Daddy Class 2 Certification Authority' hash=18f8a7a151b4ec280898093df5bd537ca099cc277405d0281de0dadfd14420da
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=1 subject='/C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./OU=http://certificates.godaddy.com/repository/CN=Go Daddy Secure Certification Authority/serialNumber=07969287' hash=09ed6e991fc3273d8fea317d339c02041861973549cfa6e1558f411f11211aa3
+wlp2s0: CTRL-EVENT-EAP-PEER-CERT depth=0 subject='/O=loki.noc.stonybrook.edu/OU=Domain Control Validated/CN=loki.noc.stonybrook.edu' hash=3b8fa9fdf8730e3cf1daf8355313abd58722e50c1952515f833dd5019e1d8773
+wlp2s0: CTRL-EVENT-EAP-PEER-ALT depth=0 DNS:loki.noc.stonybrook.edu
+wlp2s0: CTRL-EVENT-EAP-PEER-ALT depth=0 DNS:www.loki.noc.stonybrook.edu
+EAP-MSCHAPV2: Authentication succeeded
+EAP-TLV: TLV Result - Success - EAP-TLV/Phase2 Completed
+wlp2s0: CTRL-EVENT-EAP-SUCCESS EAP authentication completed successfully
+nl80211: Unexpected encryption algorithm 5
+wlp2s0: WPA: Key negotiation completed with 00:24:6c:31:b8:cb [PTK=CCMP GTK=CCMP]
+wlp2s0: CTRL-EVENT-CONNECTED - Connection to 00:24:6c:31:b8:cb completed [id=0 id_str=]
+wlp2s0: CTRL-EVENT-SIGNAL-CHANGE above=1 signal=-64 noise=9999 txrate=9000
+wlp2s0: CTRL-EVENT-SIGNAL-CHANGE above=0 signal=-69 noise=9999 txrate=65000</pre>
+
+<p>ping command and nslookup command gives us successful replies,</p>
+
+<pre class="brush: bash; toolbar: false;">
+$ ping 8.8.8.8
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=35 time=86.3 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=35 time=86.3 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=35 time=86.3 ms
+64 bytes from 8.8.8.8: icmp_seq=4 ttl=35 time=86.0 ms
+^C
+--- 8.8.8.8 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3004ms
+rtt min/avg/max/mdev = 86.060/86.301/86.393/0.386 ms
+$ nslookup google.com
+Server:		129.49.135.78
+Address:	129.49.135.78#53
+
+Non-authoritative answer:
+Name:	google.com
+Address: 74.125.226.68
+Name:	google.com
+Address: 74.125.226.72
+Name:	google.com
+Address: 74.125.226.64
+Name:	google.com
+Address: 74.125.226.65
+Name:	google.com
+Address: 74.125.226.66
+Name:	google.com
+Address: 74.125.226.78
+Name:	google.com
+Address: 74.125.226.69
+Name:	google.com
+Address: 74.125.226.70
+Name:	google.com
+Address: 74.125.226.67
+Name:	google.com
+Address: 74.125.226.73
+Name:	google.com
+Address: 74.125.226.71</pre>
+<a name="refer" style="color: #cc6600""><h4>References</h4></a>
+<ol><li><a href="https://en.wikipedia.org/wiki/Wpa_supplicant">wiki - wpa_supplicant</a></li>
+<li><a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/sec-Using_the_NetworkManager_Command_Line_Tool_nmcli.html">redhat - nmcli</a></li>
+<li><a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/sec-NetworkManager_and_the_Network_Scripts.html">redhat - NETWORKMANAGER AND THE NETWORK SCRIPTS</a></li>
+<li><a href="https://www.linux.com/community/blogs/133-general-linux/750772-three-best-network-programming-debugging-tools">linux.com - network programming debugging tools</a></li></ol>
+
+<br />
+<p>Commit (r01): Sept 30 15</p>
