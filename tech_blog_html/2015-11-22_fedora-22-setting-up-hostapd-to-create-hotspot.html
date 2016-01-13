@@ -1,24 +1,24 @@
-<p>Install hostapd</p>
+<p>Let us begin installing hostapd. We use dnf to install the package. In an older fedora system you might have to use yum.</p>
 <pre class="brush: bash;">$ sudo dnf -y install hostapd</pre>
 
-<p>check dnsmasq</p>
+<p>Let's check if we have some necessary tools installed for example dnsmasq,</p>
 <pre class="brush: bash; toolbar: false;">$ sudo dnf list dnsmasq
 Last metadata expiration check performed on Fri Nov 20 18:29:11 2015.
 Installed Packages
 dnsmasq.x86_64                   2.75-2.fc22                     @updates</pre>
 
-check module
+<p>We need to check what module we are using for the wireless interface,</p>
 <pre class="brush: bash; toolbar: false;">$ lspci -k | grep -A 3 -i network
 02:00.0 Network controller: Intel Corporation Wireless 7265 (rev 59)
 	Subsystem: Intel Corporation Dual Band Wireless-AC 7265
 	Kernel driver in use: iwlwifi
 	Kernel modules: iwlwifi</pre>
 
-check if mac80211 is showed
+<p>We need to be sure whether the interface uses mac80211 or cfg80211,</p>
 <pre class="brush: bash; toolbar: false;">$ modinfo iwlwifi | grep depend
 depends:        cfg80211</pre>
 
-What modes my wireless interface support?
+<p>Finally does my wireless interface support AP mode? To check that we apply following command,</p>
 <pre class="brush: bash; toolbar: false;"># iw list | grep "Supported interface modes" -A 8
 	Supported interface modes:
 		 * IBSS
@@ -30,7 +30,7 @@ What modes my wireless interface support?
 		 * P2P-GO
 		 * P2P-device</pre>
 
-To see some specification of my interface
+<p>To view some hardware properties of the interface we apply following command,</p>
 <pre class="brush: bash; toolbar: false;">$ iwconfig wlp2s0
 wlp2s0    IEEE 802.11abgn  ESSID:off/any  
           Mode:Managed  Access Point: Not-Associated   Tx-Power=22 dBm   
@@ -198,3 +198,6 @@ wlp2s0: AP-STA-CONNECTED 84:a6:c8:68:d8:0f
 wlp2s0: STA 84:a6:c8:68:d8:0f RADIUS: starting accounting session 5650C478-00000000
 wlp2s0: STA 84:a6:c8:68:d8:0f WPA: pairwise key handshake completed (RSN)</pre>
 
+<br />
+<p>draft: requires revision</p>
+<p>Commit (r02): Jan 13 2016</p>
