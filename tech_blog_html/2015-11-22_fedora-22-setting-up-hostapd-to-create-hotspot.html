@@ -1,0 +1,200 @@
+<p>Install hostapd</p>
+<pre class="brush: bash;">$ sudo dnf -y install hostapd</pre>
+
+<p>check dnsmasq</p>
+<pre class="brush: bash; toolbar: false;">$ sudo dnf list dnsmasq
+Last metadata expiration check performed on Fri Nov 20 18:29:11 2015.
+Installed Packages
+dnsmasq.x86_64                   2.75-2.fc22                     @updates</pre>
+
+check module
+<pre class="brush: bash; toolbar: false;">$ lspci -k | grep -A 3 -i network
+02:00.0 Network controller: Intel Corporation Wireless 7265 (rev 59)
+	Subsystem: Intel Corporation Dual Band Wireless-AC 7265
+	Kernel driver in use: iwlwifi
+	Kernel modules: iwlwifi</pre>
+
+check if mac80211 is showed
+<pre class="brush: bash; toolbar: false;">$ modinfo iwlwifi | grep depend
+depends:        cfg80211</pre>
+
+What modes my wireless interface support?
+<pre class="brush: bash; toolbar: false;"># iw list | grep "Supported interface modes" -A 8
+	Supported interface modes:
+		 * IBSS
+		 * managed
+		 * AP
+		 * AP/VLAN
+		 * monitor
+		 * P2P-client
+		 * P2P-GO
+		 * P2P-device</pre>
+
+To see some specification of my interface
+<pre class="brush: bash; toolbar: false;">$ iwconfig wlp2s0
+wlp2s0    IEEE 802.11abgn  ESSID:off/any  
+          Mode:Managed  Access Point: Not-Associated   Tx-Power=22 dBm   
+          Retry short limit:7   RTS thr:off   Fragment thr:off
+          Power Management:on</pre>
+
+
+core docu: https://wireless.wiki.kernel.org/en/users/Documentation/hostapd#using_your_distributions_hostapd
+
+This came useful when ran into some errors:
+http://unix.stackexchange.com/questions/107420/fedora-20-wifi-hotspot-almost-work-but-something-wrong
+
+There is no dhcp server installed by default, so install
+<pre class="brush: bash; toolbar: false;">$ sudo dnf -y install dhcp-server</pre>
+
+These are the commands to apply repetitively,
+stop previous
+<pre class="brush: bash; toolbar: false;">$ sudo systemctl stop NetworkManager.service
+$ sudo systemctl stop hostapd</pre>
+
+up the wifi interfaceThere is no 
+<pre class="brush: bash; toolbar: false;">$ sudo ifconfig wlp2s0 192.168.1.1 netmask 255.255.255.0 up
+# then rest of important commands
+$ sudo firewall-cmd --add-masquerade
+$ sudo systemctl start dhcpd.service
+$ sudo systemctl start hostapd</pre>
+
+Working hostapd configuration (/etc/hostapd/hostapd.conf)
+<pre class="brush: plain; toolbar: false;">ctrl_interface=/var/run/hostapd
+ctrl_interface_group=wheel
+
+# Some usable default settings...
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+
+# Uncomment these for base WPA &amp; WPA2 support with a pre-shared key
+wpa=3
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP
+
+# DO NOT FORGET TO SET A WPA PASSPHRASE!!
+wpa_passphrase=YOUR_PASSWORD_FOR_WIFI
+
+# Most modern wireless drivers in the kernel need driver=nl80211
+driver=nl80211
+#driver=iw
+
+# Customize these for your local configuration...
+interface=wlp2s0
+hw_mode=g
+channel=3
+ssid=YOUR_WIFI_SSID</pre>
+
+Followed this regarding DHCP,
+https://docs.fedoraproject.org/en-US/Fedora/22/html/Installation_Guide/pxe-dhcpd.html
+
+show all interfaces (including inactive)
+<pre class="brush: bash; toolbar: false;"> $ ifconfig -a
+eno1: flags=4098<broadcast,multicast>  mtu 1500
+        ether 20:47:47:aa:e0:6e  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+        device interrupt 20  memory 0xf7200000-f7220000  
+
+lo: flags=73<up,loopback,running>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 0  (Local Loopback)
+        RX packets 10  bytes 1096 (1.0 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 10  bytes 1096 (1.0 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+virbr0: flags=4099<up,broadcast,multicast>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+        ether 52:54:00:d3:60:93  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+virbr0-nic: flags=4098<broadcast,multicast>  mtu 1500
+        ether 52:54:00:d3:60:93  txqueuelen 500  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+wlp2s0: flags=4098<broadcast,multicast>  mtu 1500
+        ether 5c:e0:c5:25:1a:34  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</broadcast,multicast></broadcast,multicast></up,broadcast,multicast></host></up,loopback,running></broadcast,multicast></pre>
+
+Solving the DHCP Problem:
+<pre class="brush: plain; toolbar: false;">Nov 21 00:20:31 research.saoslab.com dhcpd[3723]: DHCPDISCOVER from 
+f8:a9:d0:7d:2a:4e via wlp2s0: network 192.168.1.0/24: no free leases</pre>
+
+ref: Solved by this dhcp configuration (had to range):
+<pre class="brush: plain; toolbar: false;">subnet 192.168.1.0 netmask 255.255.255.0 {
+authoritative;
+range 192.168.1.3 192.168.1.93;
+default-lease-time 600;
+max-lease-time 7200;
+ddns-update-style none;
+
+option domain-name-servers 192.168.1.1, 8.8.8.8;
+option routers 192.168.1.1;
+
+}</pre>
+
+Solving SELinux permission problems for kernel-4.2.6
+It shows following similar errors in journalctl -xe. SELinux would prevent hostapd from various socket activities,
+<pre class="brush: plain; toolbar: false;">Nov 20 23:53:57 research.saoslab.com setroubleshoot[5808]: SELinux is preventing hostapd from getattr access on the netlink_generic_socket Unknown</pre>
+I followed the command from journalctl several times (audit2allow and semodule -i) however then prevents on some other operations.
+So I modified my final te file to look like this,
+<pre class="brush: plain; toolbar: false;">module hostapd_read 1.0;
+
+require {
+        type hostapd_t;
+        class netlink_generic_socket { bind create setopt getattr };
+}
+
+#============= hostapd_t ==============
+allow hostapd_t self:netlink_generic_socket getattr;
+
+#!!!! This avc is allowed in the current policy
+allow hostapd_t self:netlink_generic_socket { bind create setopt };
+
+#Added from ref:https://bugzilla.redhat.com/show_bug.cgi?id=1266068
+allow hostapd_t hostapd_t:netlink_generic_socket
+      { create setopt bind getattr read write };</pre>
+
+Afterwards, install this policy, assuming name mypol.te, command to add this is,
+<pre class="brush: plain; toolbar: false;">semodule -i mypol.pp</pre>
+This solves the SELinux problem.
+
+Problem hostapd won't run as service (when applied with systemctl start will throw following error),
+<pre class="brush: plain; toolbar: false;">$ journalctl -xe
+Nov 20 23:57:36 research.saoslab.com hostapd[6313]: Configuration file: /etc/hostapd/hostapd.conf
+Nov 20 23:57:36 research.saoslab.com hostapd[6313]: nl80211: 'nl80211' generic netlink not found
+Nov 20 23:57:36 research.saoslab.com hostapd[6313]: Failed to initialize driver 'nl80211'
+Nov 20 23:57:36 research.saoslab.com hostapd[6313]: wlp2s0: interface state UNINITIALIZED-&gt;DISABLED
+Nov 20 23:57:36 research.saoslab.com hostapd[6313]: wlp2s0: AP-DISABLED
+Nov 20 23:57:36 research.saoslab.com hostapd[6313]: hostapd_free_hapd_data: Interface wlp2s0 wasn't started
+Nov 20 23:57:36 research.saoslab.com systemd[1]: hostapd.service: control process exited, code=exited status=1
+Nov 20 23:57:36 research.saoslab.com systemd[1]: Failed to start Hostapd IEEE 802.11 AP, IEEE 802.1X/WPA/WPA2/EAP/RADIUS Authenticator.</pre>
+
+To successfully start this I have to apply following,
+<pre class="brush: bash; toolbar: false;">$ sudo hostapd /etc/hostapd/hostapd.conf
+Configuration file: /etc/hostapd/hostapd.conf
+Using interface wlp2s0 with hwaddr 5c:e0:c5:25:1a:34 and ssid "research_wlan_fc22"
+wlp2s0: interface state UNINITIALIZED-&gt;ENABLED
+wlp2s0: AP-ENABLED</pre>
+
+When a client is connected it adds following messages in the terminal,
+<pre class="brush: plain; toolbar: false;">wlp2s0: STA 84:a6:c8:68:d8:0f IEEE 802.11: authenticated
+wlp2s0: STA 84:a6:c8:68:d8:0f IEEE 802.11: associated (aid 1)
+wlp2s0: AP-STA-CONNECTED 84:a6:c8:68:d8:0f
+wlp2s0: STA 84:a6:c8:68:d8:0f RADIUS: starting accounting session 5650C478-00000000
+wlp2s0: STA 84:a6:c8:68:d8:0f WPA: pairwise key handshake completed (RSN)</pre>
+
