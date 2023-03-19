@@ -1,0 +1,20 @@
+<p>A feature that might be convenient for many is that BlogEngine.Net supports running multiple blogs with same instance. For example, consider this scenario. You have several blogs on your site on subdomains such as,</p>
+
+<ul><li>blog1.yourdomain.com</li>
+<li>blog2.yourdomain.com</li>
+<li>blog3.yourdomain.com</li></ul>
+
+<p>However, you want to use single instance of BlogEngine.Net probably because you want to reduce maintenance overhead.</p>
+<p>We already know that BlogEngine.Net supports running multiple blog on single instance using virtual directory. In that configuration, for example, blog1 is running at blog1.yourdomain.com</p>
+
+<p>Usually after setting up, blog2 on the same instance of BE, blog2’s URL becomes <strong>blog1.yourdomain.com/blog2</strong></p>
+
+<p>Similarly blog3 becomes: <strong>blog1.yourdomain.com/blog3</strong> It is not what many desire.</p>
+
+<h3>Step by Step Procedure</h3>
+<p>There are several steps to follow. In our configuration, an instance of BE is installed on sub-domain blog1.domain.com initially. After that we configure a new subdomain to point to the same instance.</p>
+<h4>Step 1 - Initial Setup - setting up blog1 at blog1.yourdomain.com</h4>
+<p>Create a new sub-domain and website on blog1.yourdomain.com and setup a latest version of BlogEngine.Net there preferably BE 2.8, 2.9 or later.</p>
+
+<h4>Step 2 - Adding a new sub-domain blog2.yourdomain.com</h4>
+</p>using dotnotpanel/websitepanel you have to add a new domain (subdomain) such as blog2.yourdomain.com without creating and linking a website with it. Look at the screenshot below,</p>
